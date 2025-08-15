@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AlphaLoom</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>AlphaLoom</h1>
+    <p class="subtitle">文字列組み合わせ＆辞書照合による鍵候補探索ツール</p>
+  </header>
+
+  <main class="container">
+    <!-- Tabs -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="generator">鍵候補生成</button>
+      <button class="tab-btn" data-tab="dictionary">辞書設定</button>
+      <button class="tab-btn" data-tab="about">使い方</button>
+    </div>
+
+    <!-- Tab: Generator -->
+    <div class="tab-content active" data-tab="generator">
+      <section class="card">
+        <h2>1) 入力</h2>
+        <div class="row">
+          <div class="col">
+            <label for="keyLength">鍵文字数（1〜20）</label>
+            <select id="keyLength">
+              <option value="" selected>-- 選択 --</option>
+            </select>
+          </div>
+          <div class="col tips">
+            <p class="muted">
+              鍵文字候補は A–Z のみ（空欄可）。空欄の列は A–Z 全てを等確率で扱います。<br/>
+              文字を並べた順に重みが強くなります（例: <code>CAB</code> は <code>C &gt; A &gt; B</code>）。
+            </p>
+          </div>
+        </div>
+
+        <div id="columnsContainer" class="columns"></div>
+
+        <div class="run-actions">
+          <button id="runBtn" class="btn btn-primary">全パターン出力</button>
+          <button id="clearBtn" class="btn btn-ghost">クリア</button>
+          <div class="right">
+            <label>最大展開（上限）:
+              <input id="maxExpand" type="number" min="1" value="50000" />
+            </label>
+            <label>ビーム幅:
+              <input id="beamWidth" type="number" min="1" value="2000" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2) 結果（列重みベースの信頼度）</h2>
+        <div id="summaryLine" class="muted"></div>
+        <div class="result-groups">
+          <details open>
+            <summary>高信頼</summary>
+            <div id="groupHigh" class="result-list"></div>
+          </details>
+          <details open>
+            <summary>中信頼</summary>
+            <div id="groupMid" class="result-list"></div>
+          </details>
+          <details>
+            <summary>小信頼</summary>
+            <div id="groupLow" class="result-list"></div>
+          </details>
+        </div>
+
+        <div class="dict-filter">
+          <button id="dictFilterBtn" class="btn btn-secondary">辞書による絞り込み</button>
+          <label class="inline">
+            <input type="checkbox" id="partialCheck" />
+            部分一致を表示（内部的には常に集計）
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>エクスポート</h2>
+        <button id="exportCsvBtn" class="btn btn-ghost">CSVエクスポート</button>
+        <button id="exportJsonBtn" class="btn btn-ghost">JSONエクスポート</button>
+        <span id="exportInfo" class="muted"></span>
+      </section>
+    </div>
+
+    <!-- Tab: Dictionary -->
+    <div class="tab-content" data-tab="dictionary">
+      <section class="card">
+        <h2>辞書設定</h2>
+
+        <div class="row">
+          <div class="col">
+            <input type="file" id="wordlistFile" accept=".txt" />
+            <button id="loadWordlistBtn" class="btn">辞書を読み込み</button>
+          </div>
+          <div class="col">
+            <label>相対パス（Pages）:
+              <input type="text" id="wordlistPath" placeholder="wordlists/english-mini-200.txt" />
+            </label>
+            <button id="fetchWordlistBtn" class="btn btn-secondary">fetchで取得</button>
+          </div>
+        </div>
+
+        <p class="muted" id="dictStatus">辞書：内蔵ミニ辞書（約200語）</p>
+
+        <div class="dictionary-info">
+          <h3>辞書情報</h3>
+          <p>合計単語数: <span id="wordCount">0</span> 語</p>
+          <h3>読み込み済み辞書</h3>
+          <div id="dictListContainer" class="dict-list-container"></div>
+        </div>
+
+        <div class="dictionary-help">
+          <h3>使い方</h3>
+          <ul>
+            <li>ローカルファイル: テキスト（1行1語, UTF-8）を選択して「辞書を読み込み」をクリック</li>
+            <li>GitHub Pages: 相対パスを入力して「fetchで取得」をクリック</li>
+            <li>正規化: 自動的に A–Z のみに変換し、大文字化・重複は除去</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tab: About -->
+    <div class="tab-content" data-tab="about">
+      <section class="card">
+        <h2>使い方（概要）</h2>
+        <ol>
+          <li>鍵文字数（1〜20）を選ぶと「列1〜L」の入力欄が生成されます。</li>
+          <li>各列に候補文字（A–Z, 空欄可）を入力します。並び順が重みになります。</li>
+          <li>「全パターン出力」で候補鍵を生成・スコア化し、高/中/小に自動分類します。</li>
+          <li>「辞書による絞り込み」で、鍵そのものの完全一致/部分一致を使って再ランクします。</li>
+          <li>必要に応じて辞書タブで辞書を追加・有効化してください。</li>
+        </ol>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer">
+      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/alphaloom" target="_blank">ipusiron/alphaloom</a> ）
+    </div>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
