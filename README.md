@@ -1,3 +1,14 @@
+<!--
+---
+title: AlphaLoom
+category: classic-crypto
+difficulty: 2
+description: Alphabet-combination tool that generates key candidates and ranks them with dictionary hits.
+tags: [vigenere, cryptography, keysearch, dictionary, combinator]
+demo: https://ipusiron.github.io/alphaloom/
+---
+-->
+
 # AlphaLoom - 文字組み合わせ＆生成文字列分析ツール
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/ipusiron/alphaloom?style=social)
