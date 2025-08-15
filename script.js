@@ -45,8 +45,7 @@ const summaryLine = document.getElementById("summaryLine");
 const dictFilterBtn = document.getElementById("dictFilterBtn");
 const partialCheck = document.getElementById("partialCheck");
 
-const exportCsvBtn = document.getElementById("exportCsvBtn");
-const exportJsonBtn = document.getElementById("exportJsonBtn");
+const exportTxtBtn = document.getElementById("exportTxtBtn");
 const exportInfo = document.getElementById("exportInfo");
 
 // Tabs
@@ -80,7 +79,12 @@ function onKeyLengthChange(){
     const box = document.createElement("div");
     box.className = "col-box";
     const title = document.createElement("h4");
-    title.textContent = `列${i+1}`;
+    title.textContent = `列${i+1} `;
+    const helpIcon = document.createElement("span");
+    helpIcon.className = "help-icon";
+    helpIcon.textContent = "?";
+    helpIcon.title = "この位置に来る可能性が高い文字を優先順に入力（例：CAB なら C＞A＞B の順で重み付け）";
+    title.appendChild(helpIcon);
     const input = document.createElement("input");
     input.type = "text";
     input.placeholder = "例) CAB / X （空欄可）";
@@ -137,7 +141,9 @@ function generateCandidates(cols, beamWidth=2000, maxExpand=50000){
     // 上位 beamWidth だけ残す
     next.sort((a,b)=>b.logp - a.logp);
     beam = next.slice(0, beamWidth);
-    if(expandedTotal >= maxExpand) break;
+    if(expandedTotal >= maxExpand) {
+      break;
+    }
   }
   // ソート済み
   return { list: beam, expandedTotal };
@@ -166,6 +172,67 @@ function groupByConfidence(items){
   };
 }
 
+function applyHighlightSafe(element, key, matchWords){
+  element.innerHTML = ""; // クリア
+  
+  if(!matchWords || matchWords.length === 0) {
+    element.textContent = key;
+    return;
+  }
+  
+  // マッチした単語を長い順にソート（重複回避と重複チェック）
+  const uniqueWords = [...new Set(matchWords)].sort((a, b) => b.length - a.length);
+  
+  // 全ての一致位置を検索
+  const matches = [];
+  for(const word of uniqueWords) {
+    let startIndex = 0;
+    while(true) {
+      const index = key.toLowerCase().indexOf(word.toLowerCase(), startIndex);
+      if(index === -1) break;
+      
+      // 既存のマッチと重複しないかチェック
+      const overlap = matches.some(match => 
+        (index < match.end && index + word.length > match.start)
+      );
+      
+      if(!overlap) {
+        matches.push({
+          start: index,
+          end: index + word.length,
+          word: word,
+          text: key.substring(index, index + word.length)
+        });
+      }
+      startIndex = index + 1;
+    }
+  }
+  
+  // 位置順でソート
+  matches.sort((a, b) => a.start - b.start);
+  
+  // テキストを構築
+  let lastEnd = 0;
+  for(const match of matches) {
+    // マッチ前のテキスト
+    if(match.start > lastEnd) {
+      element.appendChild(document.createTextNode(key.substring(lastEnd, match.start)));
+    }
+    
+    // マッチした部分をハイライト
+    const mark = document.createElement("mark");
+    mark.textContent = match.text;
+    element.appendChild(mark);
+    
+    lastEnd = match.end;
+  }
+  
+  // 残りのテキスト
+  if(lastEnd < key.length) {
+    element.appendChild(document.createTextNode(key.substring(lastEnd)));
+  }
+}
+
 function renderGroups(groups, label="列重みベース"){
   const fmt = (x)=>x.toFixed(2);
   function render(list, root){
@@ -175,9 +242,24 @@ function renderGroups(groups, label="列重みベース"){
       div.className = "result-item";
       const left = document.createElement("div");
       left.className = "kv";
-      left.textContent = it.key;
+      
+      // 部分一致ハイライトを適用
+      if(isDictFiltered && partialCheck.checked && dictCache.partialHits){
+        const hits = dictCache.partialHits.get(it.key);
+        if(hits && hits.words.length > 0){
+          // 安全なハイライト表示
+          applyHighlightSafe(left, it.key, hits.words);
+        } else {
+          left.textContent = it.key;
+        }
+      } else {
+        left.textContent = it.key;
+      }
       const right = document.createElement("div");
-      right.innerHTML = `<span class="badge">${fmt(it.conf)}%</span>`;
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = `${fmt(it.conf)}%`;
+      right.appendChild(badge);
       div.appendChild(left);
       div.appendChild(right);
       root.appendChild(div);
@@ -187,11 +269,15 @@ function renderGroups(groups, label="列重みベース"){
   render(groups.mid, groupMid);
   render(groups.low, groupLow);
   summaryLine.textContent = `${label}：候補 ${groups.high.length + groups.mid.length + groups.low.length} 件`;
+  // 現在表示されている結果を保存（エクスポート用）
+  currentDisplayedResults = [...groups.high, ...groups.mid, ...groups.low];
 }
 
 // ---------- 実行ボタン ----------
 let lastRawList = [];     // [{key, prob, conf}]
 let lastRankedGroups = null;
+let currentDisplayedResults = []; // 現在表示されている結果（エクスポート用）
+let isDictFiltered = false; // 辞書絞り込み状態
 
 // 初期レンダリングをクリアするため
 function clearResults(){
@@ -202,6 +288,12 @@ function clearResults(){
   exportInfo.textContent = "";
   lastRawList = [];
   lastRankedGroups = null;
+  currentDisplayedResults = [];
+  isDictFiltered = false;
+  updateDictFilterButton();
+  // 結果セクションを非表示
+  document.getElementById("resultsSection").style.display = "none";
+  document.getElementById("exportSection").style.display = "none";
 }
 
 runBtn.addEventListener("click", ()=>{
@@ -211,8 +303,30 @@ runBtn.addEventListener("click", ()=>{
     alert("鍵文字数を選択してください。");
     return;
   }
-  const beamWidth = Math.max(1, parseInt(beamWidthInput.value || "2000", 10));
-  const maxExpand = Math.max(1, parseInt(maxExpandInput.value || "50000", 10));
+  const beamWidth = Math.max(1, parseInt(beamWidthInput.value || "50000", 10));
+  const maxExpand = Math.max(1, parseInt(maxExpandInput.value || "1000000", 10));
+  
+  // 文字数と設定値の妥当性チェック
+  const L = parseInt(keyLengthSel.value || "0", 10);
+  const recommendedExpand = Math.pow(26, L);
+  const recommendedBeam = Math.pow(26, Math.max(0, L-2)); // L-2文字目までの全組み合わせ
+  
+  // ビーム幅チェック
+  if(beamWidth < recommendedBeam && L >= 3) {
+    if(confirm(`${L}文字の多様な候補生成にはビーム幅${recommendedBeam.toLocaleString()}以上を推奨します。現在の設定(${beamWidth.toLocaleString()})では多様性が失われる可能性があります。\n\n推奨値に変更しますか？`)) {
+      beamWidthInput.value = recommendedBeam;
+      return; // 再実行を促す
+    }
+  }
+  
+  // 最大展開数チェック  
+  if(maxExpand < recommendedExpand / 10) {
+    const recommended = Math.ceil(recommendedExpand / 10);
+    if(confirm(`${L}文字の処理には最大展開数${recommended.toLocaleString()}以上を推奨します。現在の設定(${maxExpand.toLocaleString()})では途中で打ち切られる可能性があります。\n\n推奨値に変更しますか？`)) {
+      maxExpandInput.value = recommended;
+      return; // 再実行を促す
+    }
+  }
 
   const { list, expandedTotal } = generateCandidates(cols, beamWidth, maxExpand);
   // 正規化して信頼度%へ
@@ -222,6 +336,11 @@ runBtn.addEventListener("click", ()=>{
   renderGroups(groups, "列重みベース");
   lastRawList = norm;
   lastRankedGroups = groups;
+  isDictFiltered = false;
+  updateDictFilterButton();
+  // 結果セクションを表示
+  document.getElementById("resultsSection").style.display = "block";
+  document.getElementById("exportSection").style.display = "block";
 });
 
 // クリア
@@ -561,7 +680,8 @@ function computeDictHits(items){
   for(const it of items){
     const K = it.key; // 鍵そのもの
     // 完全一致
-    const eHit = WORDS.has(K) ? { count: 1, totalLen: K.length, words:[K] } : { count:0, totalLen:0, words:[] };
+    const hasMatch = WORDS.has(K);
+    const eHit = hasMatch ? { count: 1, totalLen: K.length, words:[K] } : { count:0, totalLen:0, words:[] };
     exact.set(K, eHit);
 
     // 部分一致（保持はするが表示切替）
@@ -585,9 +705,20 @@ function rerankWithDictionary(items){
 
   const usePartial = partialCheck.checked;
 
-  // 事前計算
+  // 辞書ヒットしたアイテムのみフィルタリング
+  const filteredItems = items.filter(it=>{
+    const K = it.key;
+    const rec = usePartial ? dictCache.partialHits.get(K) : dictCache.exactHits.get(K);
+    return rec && rec.count > 0; // 辞書にヒットしたもののみ
+  });
+
+  if(filteredItems.length === 0){
+    return []; // 辞書ヒットが0件の場合は空配列を返す
+  }
+
+  // 事前計算（フィルタリング後のアイテムのみ）
   let maxDict = 0;
-  const dictScoreArr = items.map(it=>{
+  const dictScoreArr = filteredItems.map(it=>{
     const K = it.key;
     const rec = usePartial ? dictCache.partialHits.get(K) : dictCache.exactHits.get(K);
     const sc = (rec.count) + (rec.totalLen/10);
@@ -595,7 +726,7 @@ function rerankWithDictionary(items){
     return sc;
   });
 
-  const scored = items.map((it, idx)=>{
+  const scored = filteredItems.map((it, idx)=>{
     const conf01 = it.conf / 100;
     const dict01 = maxDict>0 ? (dictScoreArr[idx]/maxDict) : 0;
     const S = alpha*conf01 + beta*dict01;
@@ -612,21 +743,42 @@ function rerankWithDictionary(items){
   return ranked;
 }
 
+function updateDictFilterButton(){
+  if(isDictFiltered){
+    dictFilterBtn.textContent = "絞り込みを解除";
+    dictFilterBtn.className = "btn btn-ghost";
+  } else {
+    dictFilterBtn.textContent = "辞書で絞り込み";
+    dictFilterBtn.className = "btn btn-secondary";
+  }
+}
+
 dictFilterBtn.addEventListener("click", ()=>{
   if(!lastRawList.length){
     alert("まずは『全パターン出力』を実行してください。");
     return;
   }
-  // hit計算は内部的に常に両方保持
-  computeDictHits(lastRawList);
-  const ranked = rerankWithDictionary(lastRawList);
-  const groups = groupByConfidence(ranked);
-  renderGroups(groups, "辞書ヒット統合");
+  
+  if(isDictFiltered){
+    // 絞り込みを解除：元の結果を表示
+    const groups = groupByConfidence(lastRawList);
+    renderGroups(groups, "列重みベース");
+    isDictFiltered = false;
+  } else {
+    // 辞書絞り込みを実行
+    computeDictHits(lastRawList);
+    const ranked = rerankWithDictionary(lastRawList);
+    const groups = groupByConfidence(ranked);
+    renderGroups(groups, "辞書ヒット統合");
+    isDictFiltered = true;
+  }
+  
+  updateDictFilterButton();
 });
 
 partialCheck.addEventListener("change", ()=>{
   // すでに辞書で再ランク済みなら、チェック切替で再描画
-  if(dictCache.exactHits && lastRawList.length){
+  if(isDictFiltered && dictCache.exactHits && lastRawList.length){
     const ranked = rerankWithDictionary(lastRawList);
     const groups = groupByConfidence(ranked);
     renderGroups(groups, "辞書ヒット統合");
@@ -634,44 +786,61 @@ partialCheck.addEventListener("change", ()=>{
 });
 
 // ========== エクスポート ==========
-function toCSV(rows){
-  const head = ["rank","key","confidence%"];
-  const lines = [head.join(",")];
-  rows.forEach((it,idx)=>{
-    lines.push([idx+1, `"${it.key}"`, it.conf.toFixed(2)].join(","));
-  });
-  return lines.join("\n");
+function formatDateTime(){
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}${month}${day}_${hours}${minutes}${seconds}`;
 }
-exportCsvBtn.addEventListener("click", ()=>{
-  const rows = lastRawList.length ? lastRawList : [];
-  if(!rows.length){ alert("出力する結果がありません。"); return; }
-  const csv = toCSV(rows);
-  const blob = new Blob([csv], {type:"text/csv"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "alphaloom_results.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-  exportInfo.textContent = "CSV を書き出しました。";
-});
 
-exportJsonBtn.addEventListener("click", ()=>{
-  const data = {
-    generatedAt: new Date().toISOString(),
-    results: lastRawList
-  };
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+function toTextLines(rows){
+  return rows.map(it => it.key).join("\n");
+}
+
+exportTxtBtn.addEventListener("click", ()=>{
+  const rows = currentDisplayedResults.length ? currentDisplayedResults : [];
+  if(!rows.length){ alert("出力する結果がありません。"); return; }
+  
+  const text = toTextLines(rows);
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = "alphaloom_results.json";
+  
+  const dateTime = formatDateTime();
+  const filterType = isDictFiltered ? "dict" : "base";
+  
+  // セキュリティ強化：ファイル名のサニタイズ
+  const safeFileName = `alphaloom_${filterType}_${dateTime}.txt`.replace(/[^a-zA-Z0-9._-]/g, '_');
+  
+  a.href = url; 
+  a.download = safeFileName;
+  a.rel = "noopener noreferrer";
   a.click();
-  URL.revokeObjectURL(url);
-  exportInfo.textContent = "JSON を書き出しました。";
+  
+  // メモリリークを防ぐため即座にURLを解放
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+  
+  const resultType = isDictFiltered ? "辞書絞り込み" : "全パターン";
+  let message = `${resultType}結果をテキストファイルで書き出しました。`;
+  
+  // ビーム幅上限チェック
+  if(!isDictFiltered) { // 全パターン結果の場合のみチェック
+    const currentBeamWidth = parseInt(beamWidthInput.value || "50000", 10);
+    if(rows.length >= currentBeamWidth) {
+      message += `\n\n⚠️ 出力された${rows.length.toLocaleString()}件はビーム幅の上限に達しています。より多くの候補を生成するにはビーム幅を${(currentBeamWidth * 2).toLocaleString()}以上に設定してください。`;
+    }
+  }
+  
+  exportInfo.textContent = message;
 });
 
 // ========== 初期表示 ==========
-// 便宜: デフォで鍵長4・列を出しておく（編集しやすい）
+// 便宜: デフォで鍵長5・列を出しておく（編集しやすい）
 (function bootstrap(){
-  keyLengthSel.value = "4";
+  keyLengthSel.value = "5";
   onKeyLengthChange();
 })();
