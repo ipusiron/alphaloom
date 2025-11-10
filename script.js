@@ -612,26 +612,49 @@ function renderDictList(){
   DictState.sources.forEach((src, idx)=>{
     const div = document.createElement("div");
     div.className = "dict-card";
+
+    // ラベルとチェックボックス作成
+    const label = document.createElement("label");
+    label.className = "inline";
+
     const cbId = `dict-en-${idx}`;
-    div.innerHTML = `
-      <label class="inline">
-        <input type="checkbox" id="${cbId}" ${src.enabled?"checked":""}/>
-        有効
-      </label>
-      <strong style="margin-left:.4rem">${src.name}</strong>
-      <span class="muted" style="margin-left:.4rem">(${src.words.size} 語)</span>
-      <button class="btn btn-ghost" style="float:right" data-action="remove">削除</button>
-    `;
-    div.querySelector(`#${cbId}`).addEventListener("change",(e)=>{
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = cbId;
+    checkbox.checked = src.enabled;
+    checkbox.addEventListener("change", (e)=>{
       src.enabled = e.target.checked;
       rebuildCombined();
     });
-    div.querySelector('[data-action="remove"]').addEventListener("click", ()=>{
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(" 有効"));
+
+    // 辞書名（textContentで安全に挿入）
+    const strong = document.createElement("strong");
+    strong.className = "dict-name";
+    strong.textContent = src.name;
+
+    // 単語数
+    const span = document.createElement("span");
+    span.className = "muted dict-count";
+    span.textContent = `(${src.words.size} 語)`;
+
+    // 削除ボタン
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "btn btn-ghost dict-remove-btn";
+    removeBtn.textContent = "削除";
+    removeBtn.addEventListener("click", ()=>{
       if(idx===0){ alert("内蔵辞書は削除できません。"); return; }
       DictState.sources.splice(idx,1);
       rebuildCombined();
       renderDictList();
     });
+
+    div.appendChild(label);
+    div.appendChild(strong);
+    div.appendChild(span);
+    div.appendChild(removeBtn);
     box.appendChild(div);
   });
 }

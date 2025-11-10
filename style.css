@@ -96,7 +96,10 @@ select{
 
 .dictionary-info{margin-top:.8rem}
 .dict-list-container{display:grid;gap:.4rem;margin-top:.4rem}
-.dict-card{background:#ffffff;border:1px solid var(--border);border-radius:.6rem;padding:.5rem}
+.dict-card{background:#ffffff;border:1px solid var(--border);border-radius:.6rem;padding:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.dict-card .dict-name{margin-left:.4rem}
+.dict-card .dict-count{margin-left:.4rem}
+.dict-card .dict-remove-btn{margin-left:auto}
 
 .footer{margin:2rem auto 2.6rem;border-top:1px solid var(--border);padding-top:1rem;text-align:center;color:var(--muted)}
 .muted{color:var(--muted)}
