@@ -1,11 +1,37 @@
 <!--
 ---
-title: AlphaLoom
-category: classic-crypto
-difficulty: 2
-description: Alphabet-combination tool that generates key candidates and ranks them with dictionary hits.
-tags: [vigenere, cryptography, keysearch, dictionary, combinator]
-demo: https://ipusiron.github.io/alphaloom/
+id: day046
+slug: alphaloom
+
+title: "AlphaLoom"
+
+subtitle_ja: "文字組み合わせ＆生成文字列分析ツール"
+subtitle_en: "Alphabet Combination & Key Candidate Analyzer"
+
+description_ja: "各列の候補文字からその組み合わせ文字列を生成し、ビームサーチで信頼度順にランキング。辞書照合による絞り込みでヴィジュネル暗号の鍵特定を支援。"
+description_en: "Generates key candidates from column-wise character inputs using beam search, ranks them by confidence, and refines results with dictionary matching for Vigenère cipher key identification."
+
+category_ja:
+  - 古典暗号
+  - 暗号解読
+category_en:
+  - Classic Cryptography
+  - Cryptanalysis
+
+difficulty: 1
+
+tags:
+  - vigenere
+  - cryptography
+  - keysearch
+  - dictionary
+  - beam-search
+  - ctf
+
+repo_url: "https://github.com/ipusiron/alphaloom"
+demo_url: "https://ipusiron.github.io/alphaloom/"
+
+hub: true
 ---
 -->
 
@@ -18,10 +44,6 @@ demo: https://ipusiron.github.io/alphaloom/
 [![GitHub Pages](https://img.shields.io/badge/demo-GitHub%20Pages-blue?logo=github)](https://ipusiron.github.io/alphaloom/)
 
 **Day046 - 生成AIで作るセキュリティツール100**
-
----
-
-## 📜 概要
 
 **AlphaLoom** は、各列の候補文字からその組み合わせ文字列を生成し、信頼度順に分類・表示できるWebツールです。  
 
@@ -175,7 +197,7 @@ AlphaLoomは以下のユーザーを対象としています：
 
 **競技状況**: 複数段階の暗号が組み合わさった高難易度問題
 
-**問題構成**: Base64 → ヴィジュネル → ROT13 の多段暗号
+**問題構成**: 「Base64 → ヴィジュネル → ROT13」の多段暗号
 
 **AlphaLoom活用ポイント**:
 1. **中間結果の再利用**: 第2段階で部分的に得られた情報を列重みに反映
@@ -204,7 +226,7 @@ AlphaLoomは以下のユーザーを対象としています：
 
 ---
 
-## 📁 ディレクトリ構造
+## 📁 ディレクトリー構造
 
 ```
 alphaloom/
@@ -278,7 +300,7 @@ echo "最適化後: $(wc -l < optimized.txt) 行"
 
 **コマンド説明**:
 - `tr '[:lower:]' '[:upper:]'`: 小文字を大文字に変換
-- `grep '^[A-Z]*$'`: A-Z のみの行を抽出
+- `grep '^[A-Z]*$'`: 「A-Z」のみの行を抽出
 - `sort -u`: ソートと重複除去を同時実行
 - `awk 'length($0) >= 2'`: 2文字以上の単語のみ抽出（オプション）
 
