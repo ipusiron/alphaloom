@@ -25,7 +25,9 @@ export const BUILTIN_WORDS = [
 export const BUNDLED_WORDLISTS = [
   { id: 'english_5067', file: 'wordlists/english_5067.txt', lines: 5068, words: 2945 },
   { id: 'english_1842', file: 'wordlists/english_1842.txt', lines: 1842, words: 1472 },
-  { id: 'animals', file: 'wordlists/animals.txt', lines: 695, words: 546 }
+  { id: 'animals', file: 'wordlists/animals.txt', lines: 695, words: 546 },
+  // 12dicts 6.0.2 の 3of6game（Alan Beale、公有）。出典と SHA-256 は wordlists/12dicts-NOTICE.md
+  { id: 'twelvedicts', file: 'wordlists/12dicts-3of6game.txt', lines: 64662, words: 64662 }
 ];
 
 // 内蔵ミニ辞書と同じ内容のファイル（画面の一覧には出さない。自分の辞書を作るときの見本）

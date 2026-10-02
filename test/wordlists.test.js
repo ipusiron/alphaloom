@@ -33,3 +33,14 @@ test('辞書名: 制御文字を空白に、長すぎる名前は切る', () => 
   assert.equal(displayName('<img src=x onerror=alert(1)>.txt'), '<img src=x onerror=alert(1)>.txt');
   assert.equal(displayName('a'.repeat(200)).length, MAX_NAME_LENGTH);
 });
+
+test('12dicts 3of6game: 改行を LF にそろえた内容の SHA-256 が出典の記載と一致し、出典の文書がある。最初からは読み込まない', async () => {
+  const { createHash } = await import('node:crypto');
+  const text = read('wordlists/12dicts-3of6game.txt').replace(/\r\n/g, '\n');
+  const hash = createHash('sha256').update(text, 'utf8').digest('hex');
+  const notice = read('wordlists/12dicts-NOTICE.md');
+  assert.equal(hash, 'aecd303c276568591a7cb788c2c27fd412151430541b82237bd0cd3693a7d9c6');
+  assert.ok(notice.includes(hash));
+  assert.ok(notice.includes('public domain'));
+  assert.ok(!DEFAULT_WORDLISTS.includes('twelvedicts'));
+});

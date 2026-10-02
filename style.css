@@ -419,6 +419,9 @@ mark {
 
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.link-list { margin: 8px 0; padding-left: 20px; }
+.link-list li { margin: 6px 0; }
+
 /* ===== Footer ===== */
 .footer {
   margin: 32px 16px 24px;

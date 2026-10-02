@@ -4,7 +4,7 @@ import fs from 'node:fs';
 
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const read = (f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
-const SCRIPTS = ['script.js', 'js/tabs.js', 'js/theme.js', 'js/theme-init.js', 'js/file-check.js'];
+const SCRIPTS = ['script.js', 'js/tabs.js', 'js/theme.js', 'js/theme-init.js', 'js/file-check.js', 'js/params.js'];
 
 test('CSP: インラインのスクリプト・スタイルを許さず、外部への送信先を持たない', () => {
   const m = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/);
@@ -27,7 +27,7 @@ test('インラインのイベントハンドラー・style 属性・インラ�
     assert.match(m[1], /src="/);
     assert.equal(m[2].trim(), '');
   }
-  for (const id of ['resultsSection', 'dictSection']) assert.match(html, new RegExp(`id="${id}"[^>]*hidden`), id);
+  for (const id of ['resultsSection', 'dictSection', 'cipherSection']) assert.match(html, new RegExp(`id="${id}"[^>]*hidden`), id);
   for (const f of SCRIPTS) assert.doesNotMatch(read(f), /style="|\.cssText|setAttribute\('style'|\.style\.|onclick|onchange|alert\(|confirm\(/, f);
 });
 
@@ -46,7 +46,10 @@ test('画面の要素の id がそろっている（それぞれ1つだけ）', 
     'formGen', 'keyLength', 'pattern', 'applyPatternBtn', 'columnsContainer', 'keep', 'runBtn', 'clearBtn', 'status', 'resultsSection',
     'summaryLine', 'staleNote', 'equalNote', 'partialCheck', 'resultInfo', 'resultTable', 'moreBtn', 'exportTxtBtn', 'exportCsvBtn', 'exportJsonBtn',
     'exportInfo', 'dictSection', 'dictSummary', 'dictTable', 'exportDictCsvBtn', 'exportDictJsonBtn', 'dictProtocolNote', 'dictListContainer',
-    'dictStatus', 'wordCount', 'wordlistFile', 'loadWordlistBtn', 'pasteWords', 'addPastedBtn'];
+    'dictStatus', 'wordCount', 'wordlistFile', 'loadWordlistBtn', 'pasteWords', 'addPastedBtn',
+    'formCipher', 'cipherText', 'cipherKeyLength', 'estimateBtn', 'estimateResult', 'perColumn', 'analyzeBtn', 'clearCipherBtn', 'cipherStatus',
+    'cipherSection', 'cipherSummary', 'cipherAccuracy', 'cipherTable', 'cipherInfo', 'columnRankTable', 'exportCipherCsvBtn', 'exportCipherJsonBtn',
+    'cipherLinks'];
   for (const id of ids) assert.equal(html.split(`id="${id}"`).length - 1, 1, id);
 });
 
@@ -69,7 +72,10 @@ test('ボタンには type、入力欄にはラベル（列の欄は JS で labe
   }
   assert.match(read('script.js'), /el\('label', \{ htmlFor: id/);
   for (const m of html.matchAll(/<a\b[^>]*href="https?:[^"]*"[^>]*>/g)) assert.match(m[0], /rel="noopener noreferrer"/, m[0]);
-  for (const id of ['status', 'dictStatus', 'exportInfo']) assert.match(html, new RegExp(`id="${id}"[^>]*aria-live="polite"`), id);
+  for (const id of ['status', 'dictStatus', 'exportInfo', 'cipherStatus', 'estimateResult']) {
+    assert.match(html, new RegExp(`id="${id}"[^>]*aria-live="polite"`), id);
+  }
+  assert.match(read('script.js'), /target: '_blank', rel: 'noopener noreferrer'/);
 });
 
 test('画面の組み立てに innerHTML を使わない（辞書名・鍵はすべて textContent）', () => {
