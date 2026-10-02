@@ -10,12 +10,24 @@ import { BUILTIN_WORDS, BUNDLED_WORDLISTS, DEFAULT_WORDLISTS, MAX_FILE_BYTES, MA
 import { t } from './js/messages.js';
 import { initThemeToggle } from './js/theme.js';
 import { initTabs } from './js/tabs.js';
+import {
+  cipherLetters, rankColumns, scoreWordsByCipher, decryptVigenere, keyLengthCandidates, MAX_CIPHER_LETTERS, ENGLISH_EXPECTED, RANDOM_EXPECTED
+} from './js/vigenere.js';
+import { ACCURACY } from './js/accuracy.js';
+import { readParams } from './js/params.js';
 
 // ===== Utilities =====
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => Number(n).toLocaleString();
 const IS_FILE = window.location.protocol === 'file:';
 const PAGE = 200;
+// 試し解きで表に出す、戻した文の先頭の文字数
+const PREVIEW = 40;
+// 書き出しに入れる、戻した文の先頭の文字数（辞書の語の数×暗号文の長さで大きくなりすぎないように）
+const EXPORT_PREVIEW = 100;
+// 暗号文での照合の表に出す語の数（全件は書き出しで）
+const CIPHER_ROWS = 50;
+const TOOL_BASE = 'https://ipusiron.github.io/';
 
 function el(tag, props = {}, children = []) {
   const node = document.createElement(tag);
@@ -108,6 +120,10 @@ function rebuildDictionary(focusKey = null) {
   $('#wordCount').textContent = fmt(dictWords.length);
   renderDictionaryList(focusKey);
   // 結果を出しているなら、辞書の照合と印を新しい辞書で描き直す（どちらも速い）
+  if (state.cipher) {
+    computeCipher();
+    renderCipher();
+  }
   if (state.result) {
     computeDictionary();
     renderResults();
@@ -215,7 +231,18 @@ function formatBytes(n) {
 
 // ===== Generate =====
 // result: { cols, total, top: [{key, logw}], kept }、dict: [{word, logw}]、shown＝表示している件数
-const state = { result: null, dict: [], rows: [], shown: PAGE };
+// cipher: { letters, L, ranks, ranking }（暗号文から列の候補を作ったとき）
+const state = { result: null, dict: [], rows: [], shown: PAGE, cipher: null };
+
+// 試し解き: 暗号文があり、鍵の長さが今の文字数と同じなら、その鍵で戻した文の先頭を返す
+function trialText(key) {
+  if (!state.cipher || state.cipher.L !== key.length) return null;
+  return decryptVigenere(state.cipher.letters.slice(0, PREVIEW), key);
+}
+
+function trialActive() {
+  return Boolean(state.cipher && state.result && state.cipher.L === state.result.cols.length);
+}
 
 function readKeep() {
   const el2 = $('#keep');
@@ -314,16 +341,20 @@ function renderResults() {
   const rows = visibleRows();
   const shown = rows.slice(0, state.shown);
   const tbody = $('#resultTable tbody');
+  const trial = trialActive();
+  for (const th of document.querySelectorAll('.trial-col')) th.hidden = !trial;
   const frag = document.createDocumentFragment();
   shown.forEach((r, i) => {
     const words = r.contains.map((f) => f.word);
     const note = dictSet.has(r.key) ? t('gen.inDictionary') : words.length ? t('gen.contains', { words: words.join(', ') }) : t('gen.none');
-    frag.append(el('tr', {}, [
+    const tr = el('tr', {}, [
       el('td', { text: String(i + 1) }),
       el('td', {}, [keyCell(r.key, r.contains)]),
       el('td', { text: formatShare(r.logw) }),
       el('td', { text: note })
-    ]));
+    ]);
+    if (trial) tr.append(el('td', {}, [el('code', { text: trialText(r.key) })]));
+    frag.append(tr);
   });
   tbody.replaceChildren(frag);
   let info = shown.length < rows.length ? t('gen.shown', { total: fmt(rows.length), shown: fmt(shown.length) })
@@ -339,18 +370,136 @@ function renderResults() {
 function renderDictionary() {
   const tbody = $('#dictTable tbody');
   const frag = document.createDocumentFragment();
+  const trial = trialActive();
   state.dict.slice(0, PAGE).forEach((d, i) => {
-    frag.append(el('tr', {}, [
+    const tr = el('tr', {}, [
       el('td', { text: String(i + 1) }),
       el('td', {}, [el('code', { text: d.word })]),
       el('td', { text: formatShare(d.logw) })
-    ]));
+    ]);
+    if (trial) tr.append(el('td', {}, [el('code', { text: trialText(d.word) })]));
+    frag.append(tr);
   });
   tbody.replaceChildren(frag);
   const len = state.result ? state.result.cols.length : 0;
   $('#dictSummary').textContent = state.dict.length
     ? t('dict.summary', { total: fmt(dictWords.length), len, n: fmt(state.dict.length) })
     : t('dict.noMatch');
+}
+
+// ===== Cipher（暗号文から列の候補を作る） =====
+function readInt(sel, min, max) {
+  const node = $(sel);
+  if (node.validity && node.validity.badInput) return NaN;
+  const raw = String(node.value).trim();
+  const n = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  return n >= min && n <= max ? n : NaN;
+}
+
+function estimateKeyLength() {
+  const out = $('#estimateResult');
+  const letters = cipherLetters($('#cipherText').value);
+  if (!letters) return setStatus(out, t('cipher.noText'), true);
+  const { candidates, curve, periodFound } = keyLengthCandidates(letters.slice(0, MAX_CIPHER_LETTERS));
+  const ic = Object.fromEntries(curve.map((p) => [p.k, p.ic]));
+  const list = candidates.slice(0, 3).map((k) => t('cipher.estimateItem', { k, ic: ic[k].toFixed(3) })).join(t('cipher.estimateJoin'));
+  setStatus(out, t(periodFound ? 'cipher.estimate' : 'cipher.estimateNone', { list }));
+  if (candidates.length) $('#cipherKeyLength').value = String(candidates[0]);
+}
+
+function computeCipher() {
+  const c = state.cipher;
+  c.ranking = scoreWordsByCipher(c.letters, dictWords, c.L);
+}
+
+// 暗号文の長さ以下で最も長い測定の行（24字未満は 24 字の行を「目安」として返す）
+function accuracyRow(n) {
+  const large = sources.some((s) => s.id === 'twelvedicts' && s.enabled && s.words);
+  const table = large ? ACCURACY.large : ACCURACY.base;
+  const rows = table.rows.filter((r) => r.length <= n);
+  return { row: rows.length ? rows[rows.length - 1] : table.rows[0], below: !rows.length, dict: t(large ? 'cipher.dictLarge' : 'cipher.dictBase') };
+}
+
+function analyzeCipher() {
+  const status = $('#cipherStatus');
+  const { letters } = normalizeLetters($('#cipherText').value);
+  if (!letters) return setStatus(status, t('cipher.noText'), true);
+  if (letters.length > MAX_CIPHER_LETTERS) return setStatus(status, t('cipher.tooLong', { n: fmt(letters.length), limit: fmt(MAX_CIPHER_LETTERS) }), true);
+  const L = readInt('#cipherKeyLength', 1, MAX_KEY_LENGTH);
+  if (Number.isNaN(L)) return setStatus(status, t('cipher.keyLengthInvalid'), true);
+  const k = readInt('#perColumn', 1, 26);
+  if (Number.isNaN(k)) return setStatus(status, t('cipher.perColumnInvalid'), true);
+  if (letters.length < L) return setStatus(status, t('cipher.tooShort', { n: letters.length, len: L }), true);
+  const ranks = rankColumns(letters, L);
+  state.cipher = { letters, L, ranks, ranking: [] };
+  computeCipher();
+  // 列ごとの上位 k 文字を列の欄へ入れ、組み合わせを作る
+  $('#keyLength').value = String(L);
+  renderColumns(L, ranks.map((col) => col.slice(0, k).map((x) => x.letter).join('')));
+  renderCipher();
+  setStatus(status, letters.length < 24 ? t('cipher.short', { n: letters.length }) : t('cipher.done', { k }));
+  run();
+}
+
+function cipherLink(text, href) {
+  return el('li', {}, [el('a', { href, text, target: '_blank', rel: 'noopener noreferrer' })]);
+}
+
+function renderCipher() {
+  const c = state.cipher;
+  $('#cipherSection').hidden = !c;
+  if (!c) return;
+  const pct = (x, row) => `${Math.round((x / row.trials) * 100)}%`;
+  $('#cipherSummary').textContent = c.ranking.length
+    ? t('cipher.summary', { n: fmt(c.letters.length), len: c.L, m: fmt(c.ranking.length) })
+    : t('cipher.noWords', { len: c.L });
+  const acc = accuracyRow(c.letters.length);
+  const scale = t('cipher.scale', { english: ENGLISH_EXPECTED.toFixed(2), random: RANDOM_EXPECTED.toFixed(2) });
+  const measured = acc.below ? t('cipher.accuracyBelow', { rank1: pct(acc.row.rank1, acc.row), top5: pct(acc.row.top5, acc.row) })
+    : t('cipher.accuracy', { dict: acc.dict, at: acc.row.length, rank1: pct(acc.row.rank1, acc.row), top5: pct(acc.row.top5, acc.row),
+      perColumn: pct(acc.row.perColumn, acc.row) });
+  $('#cipherAccuracy').textContent = `${scale} ${measured}`;
+  const frag = document.createDocumentFragment();
+  c.ranking.slice(0, CIPHER_ROWS).forEach((r, i) => {
+    frag.append(el('tr', {}, [
+      el('td', { text: String(i + 1) }),
+      el('td', {}, [el('code', { text: r.word })]),
+      el('td', { text: r.score.toFixed(3) }),
+      el('td', {}, [el('code', { text: decryptVigenere(c.letters.slice(0, PREVIEW), r.word) })])
+    ]));
+  });
+  $('#cipherTable tbody').replaceChildren(frag);
+  $('#cipherInfo').textContent = c.ranking.length > CIPHER_ROWS
+    ? t('cipher.shown', { shown: fmt(CIPHER_ROWS), total: fmt(c.ranking.length) }) : '';
+  const ranks = document.createDocumentFragment();
+  c.ranks.forEach((col, j) => {
+    ranks.append(el('tr', {}, [
+      el('th', { scope: 'row', text: t('cipher.col', { n: j + 1 }) }),
+      ...col.slice(0, 5).map((x) => el('td', { text: t('cipher.cell', { letter: x.letter, score: x.score.toFixed(2) }) }))
+    ]));
+  });
+  $('#columnRankTable tbody').replaceChildren(ranks);
+  const q = encodeURIComponent(c.letters);
+  $('#cipherLinks').replaceChildren(
+    cipherLink(t('cipher.linkVigenere'), `${TOOL_BASE}vigenere-cipher-tool/?text=${q}`),
+    cipherLink(t('cipher.linkDivider'), `${TOOL_BASE}modular-text-divider/?text=${q}&n=${c.L}`)
+  );
+}
+
+function exportCipher(format) {
+  const info = $('#cipherStatus');
+  if (!state.cipher || !state.cipher.ranking.length) return setStatus(info, t('export.nothing'), true);
+  const records = state.cipher.ranking.map((r, i) => ({
+    rank: i + 1, key: r.word, score: Number(r.score.toFixed(6)), plaintext: decryptVigenere(state.cipher.letters.slice(0, EXPORT_PREVIEW), r.word)
+  }));
+  const file = `alphaloom_cipher_${stamp()}.${format}`;
+  if (format === 'csv') {
+    const header = Object.keys(records[0]);
+    download(toCsv(header, records.map((r) => header.map((key) => r[key]))), file, 'text/csv;charset=utf-8');
+  } else {
+    download(`${JSON.stringify(records, null, 2)}\n`, file, 'application/json');
+  }
+  setStatus(info, t('export.done', { n: fmt(records.length), file }));
 }
 
 // ===== Export =====
@@ -446,6 +595,21 @@ function bindEvents() {
     state.shown += PAGE;
     renderResults();
   });
+  $('#formCipher').addEventListener('submit', (e) => {
+    e.preventDefault();
+    analyzeCipher();
+  });
+  $('#estimateBtn').addEventListener('click', estimateKeyLength);
+  $('#clearCipherBtn').addEventListener('click', () => {
+    $('#cipherText').value = '';
+    setStatus($('#cipherStatus'), '');
+    setStatus($('#estimateResult'), '');
+    state.cipher = null;
+    renderCipher();
+    renderResults();
+  });
+  $('#exportCipherCsvBtn').addEventListener('click', () => exportCipher('csv'));
+  $('#exportCipherJsonBtn').addEventListener('click', () => exportCipher('json'));
   $('#exportTxtBtn').addEventListener('click', () => exportResults('txt'));
   $('#exportCsvBtn').addEventListener('click', () => exportResults('csv'));
   $('#exportJsonBtn').addEventListener('click', () => exportResults('json'));
@@ -503,11 +667,25 @@ async function init() {
     const note = $('#dictProtocolNote');
     note.textContent = t('dictionary.fileProtocol');
     note.hidden = false;
-    return;
+  } else {
+    const defaults = sources.filter((s) => s.kind === 'bundled' && DEFAULT_WORDLISTS.includes(s.id));
+    await Promise.all(defaults.map((s) => loadBundled(s)));
+    rebuildDictionary();
   }
-  const defaults = sources.filter((s) => s.kind === 'bundled' && DEFAULT_WORDLISTS.includes(s.id));
-  await Promise.all(defaults.map((s) => loadBundled(s)));
-  rebuildDictionary();
+  applyParams();
+}
+
+// ?text=…&n=… で渡された暗号文と鍵の長さを入れる。鍵の長さがあれば列の候補まで作り、なければ鍵の長さを推定する
+function applyParams() {
+  const { text, n } = readParams(window.location.search);
+  if (!text) return;
+  $('#cipherText').value = text;
+  if (n) {
+    $('#cipherKeyLength').value = String(n);
+    analyzeCipher();
+  } else {
+    estimateKeyLength();
+  }
 }
 
 init();

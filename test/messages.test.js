@@ -5,7 +5,7 @@ import { MESSAGES, t, setLanguage, getLanguage } from '../js/messages.js';
 import { BUNDLED_WORDLISTS } from '../js/wordlists.js';
 
 const read = (f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
-const LOGIC = ['script.js', 'js/loom-core.js', 'js/wordlists.js', 'js/tabs.js', 'js/theme.js'];
+const LOGIC = ['script.js', 'js/loom-core.js', 'js/wordlists.js', 'js/tabs.js', 'js/theme.js', 'js/vigenere.js', 'js/params.js'];
 // かな・カタカナ・漢字（記号の定数はエスケープ表記で書くので、ここに当たるのは文言だけ）
 const JAPANESE = new RegExp('[\\u3040-\\u30ff\\u3400-\\u9fff]');
 const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1');

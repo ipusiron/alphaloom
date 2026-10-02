@@ -56,6 +56,39 @@
 
     <!-- 鍵候補生成 -->
     <section id="panel-generator" class="tab-content" role="tabpanel" aria-labelledby="tab-generator">
+      <section class="card" aria-labelledby="cipherHeading">
+        <h2 id="cipherHeading">暗号文から列の候補を作る（ヴィジュネル暗号・使わなくてもよい）</h2>
+        <p class="hint">暗号文と鍵の長さを入れると、列ごとに鍵の文字を英語らしさの順に並べて上位を下の列に入れ、
+          辞書の語を「その語で戻した文の英語らしさ」の順に並べます。鍵が英単語なら、列ごとの1位がそろわない短い暗号文でも鍵が上位に出ます。</p>
+        <form id="formCipher" novalidate>
+          <div class="field">
+            <label for="cipherText">暗号文</label>
+            <textarea id="cipherText" rows="4" spellcheck="false" maxlength="20000" placeholder="例: URDHLRXEZZEFNAGSCFGIUPVYURIBXBHEVQXEASKH"
+                      aria-describedby="cipherTextHint"></textarea>
+            <p class="hint" id="cipherTextHint">英字だけを使います（空白・記号・数字は無視、10,000字まで）</p>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="cipherKeyLength">鍵の長さ（1〜20）</label>
+              <div class="inline-input">
+                <input type="number" id="cipherKeyLength" min="1" max="20" inputmode="numeric" placeholder="例: 6">
+                <button type="button" id="estimateBtn" class="btn">推定</button>
+              </div>
+              <p class="hint" id="estimateResult" role="status" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="perColumn">列に入れる文字の数（1〜26）</label>
+              <input type="number" id="perColumn" min="1" max="26" value="3" inputmode="numeric">
+            </div>
+          </div>
+          <div class="search-row">
+            <button type="submit" id="analyzeBtn" class="btn btn-primary">列の候補を作る</button>
+            <button type="button" id="clearCipherBtn" class="btn btn-ghost">暗号文を消す</button>
+          </div>
+          <p id="cipherStatus" class="status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
       <form id="formGen" class="card" novalidate>
         <h2>1) 入力</h2>
         <div class="field-grid">
@@ -92,6 +125,48 @@
         </div>
       </form>
 
+      <section class="card" id="cipherSection" aria-labelledby="cipherResultHeading" hidden>
+        <h2 id="cipherResultHeading">暗号文での照合（辞書の語を英語らしさの順に）</h2>
+        <p id="cipherSummary" class="summary"></p>
+        <p id="cipherAccuracy" class="hint"></p>
+        <div class="table-wrap">
+          <table id="cipherTable" aria-describedby="cipherInfo">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">鍵（辞書の語）</th>
+                <th scope="col">英語らしさ</th>
+                <th scope="col">戻した文（先頭）</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="cipherInfo" class="muted"></p>
+        <h3 id="columnRankHeading">列ごとの鍵の文字（英語らしさの順）</h3>
+        <div class="table-wrap">
+          <table id="columnRankTable" aria-labelledby="columnRankHeading">
+            <thead>
+              <tr>
+                <th scope="col">列</th>
+                <th scope="col">1位</th>
+                <th scope="col">2位</th>
+                <th scope="col">3位</th>
+                <th scope="col">4位</th>
+                <th scope="col">5位</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="result-actions">
+          <button type="button" id="exportCipherCsvBtn" class="btn btn-ghost">CSVで保存</button>
+          <button type="button" id="exportCipherJsonBtn" class="btn btn-ghost">JSONで保存</button>
+        </div>
+        <h3>この暗号文をほかのツールで開く</h3>
+        <ul id="cipherLinks" class="link-list"></ul>
+      </section>
+
       <section class="card" id="resultsSection" aria-labelledby="resultsHeading" hidden>
         <h2 id="resultsHeading">2) 組み合わせ（重みの大きい順）</h2>
         <p id="summaryLine" class="summary"></p>
@@ -112,6 +187,7 @@
                 <th scope="col">鍵の候補</th>
                 <th scope="col">重み</th>
                 <th scope="col">辞書の語</th>
+                <th scope="col" class="trial-col" hidden>戻した文（先頭）</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -140,6 +216,7 @@
                 <th scope="col">#</th>
                 <th scope="col">辞書の語</th>
                 <th scope="col">重み</th>
+                <th scope="col" class="trial-col" hidden>戻した文（先頭）</th>
               </tr>
             </thead>
             <tbody></tbody>
