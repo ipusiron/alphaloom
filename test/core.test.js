@@ -116,6 +116,7 @@ test('辞書ファイルの読み込み: 1行1語、英字だけに直して重�
 test('重みの表示と CSV', () => {
   assert.equal(formatShare(Math.log(0.5)), '50%');
   assert.equal(formatShare(Math.log(1 / 26 ** 5)), '8.42e-6%');
+  assert.equal(formatShare(Math.log(1 / 26 ** 3)), '0.00569%');
   const csv = toCsv(['rank', 'key'], [[1, 'THEIR'], [2, 'say "hi"']]);
   assert.equal(csv.charCodeAt(0), 0xfeff);
   assert.equal(csv.slice(1), '"rank","key"\r\n"1","THEIR"\r\n"2","say ""hi"""\r\n');

@@ -185,10 +185,10 @@ export function parseWordList(text) {
   return { words: [...seen], lines, invalid, duplicates };
 }
 
-// 重み（確率）を百分率の文字列にする。小さい値は有効数字3桁の指数表記
+// 重み（確率）を百分率の文字列にする（有効数字3桁）。0.001%以上は小数、それより小さい値は指数表記
 export function formatShare(logw) {
   const pct = Math.exp(logw) * 100;
-  if (pct >= 0.01) return `${Number(pct.toPrecision(3))}%`;
+  if (pct >= 0.001) return `${Number(pct.toPrecision(3))}%`;
   return `${pct.toExponential(2)}%`;
 }
 
