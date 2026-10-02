@@ -37,6 +37,7 @@ const JA = {
   'dictionary.bundled.english_5067': '一般英単語（english_5067）',
   'dictionary.bundled.english_1842': '基本英単語（english_1842）',
   'dictionary.bundled.animals': '動物名（animals）',
+  'dictionary.bundled.twelvedicts': '大きい英単語辞書（12dicts 3of6game、活用形を含む）',
   'dictionary.pasted': '貼り付けた辞書 {n}',
   'dictionary.none': '辞書未選択',
   'dictionary.loading': '読み込み中…',

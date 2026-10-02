@@ -140,6 +140,7 @@ AlphaLoomは、鍵の位置（列）ごとに「来そうな文字」を優先�
 | english_1842.txt | 基本英単語（よく使う語の順） | 1,842 | 1,472 | ○ |
 | animals.txt | 動物名 | 695 | 546 | |
 | english-mini-223.txt | 内蔵ミニ辞書と同じ語 | 223 | 222 | ○（内蔵） |
+| 12dicts-3of6game.txt | 大きい英単語辞書（12dicts、活用形を含む） | 64,662 | 64,662 | |
 
 - 内蔵ミニ辞書（222語）は、よく使う英単語と暗号・コンピューターの語で、読み込みなしで使える。english-mini-223.txtは同じ語を1行1語にしたファイル（ABOUTが2行あるので223行）で、自分の辞書を作るときの見本になる
 - 自分の辞書は、1行に1語のテキストファイル（UTF-8、10MB・50万語まで）か貼り付けで足す。小文字・記号が混じっていても、英字だけに直して使う
@@ -214,12 +215,15 @@ alphaloom/
 │   ├── screenshot2.png       # スクリーンショット（辞書の語との照合）
 │   └── screenshot3.png       # スクリーンショット（部分一致・ダーク）
 ├── js/                       # 画面以外のモジュール
+│   ├── accuracy.js           # 暗号文の長さごとの鍵の当たり方（実測、自動生成）
+│   ├── english.js            # 英語の文字の出現数（自動生成）
 │   ├── file-check.js         # file://で起動できなかったときの案内
 │   ├── loom-core.js          # 探索のロジック（列の重み・上位の組み合わせ・辞書の採点・部分一致・CSV）
 │   ├── messages.js           # 画面に出す文言
 │   ├── tabs.js               # タブの切り替え（キーボード操作を含む）
 │   ├── theme-init.js         # 読み込みの最初にテーマを当てる
 │   ├── theme.js              # ライト／ダークの切り替え
+│   ├── vigenere.js           # 暗号文の分析（鍵の長さ・列ごとの候補・辞書の語の英語らしさ・戻し）
 │   └── wordlists.js          # 内蔵ミニ辞書と付属辞書の一覧
 ├── test/                     # テスト（node:test）
 │   ├── contrast.test.js      # 配色のコントラスト・入力欄と操作の大きさ
@@ -228,8 +232,17 @@ alphaloom/
 │   ├── html.test.js          # CSP・要素のid・タブの役割・ラベル
 │   ├── messages.test.js      # 文言の置き場所とキー
 │   ├── readme.test.js        # READMEの表・構成・ツリー・画像
+│   ├── vigenere.test.js      # 暗号文の分析・既知解答・正答率の表
 │   └── wordlists.test.js     # 付属辞書の語数と内蔵ミニ辞書
+├── tools/                    # 生成と測定の道具（Node.js）
+│   ├── corpus/               # 英文の抜粋（英字だけ、Project Gutenberg）
+│   │   ├── eval-pg98.txt     # 評価用: A Tale of Two Cities（#98）
+│   │   └── train-pg1342.txt  # 文字の頻度用: Pride and Prejudice（#1342）
+│   ├── build-english.mjs     # 英語の文字の出現数を数えてjs/english.jsを作る
+│   └── measure-accuracy.mjs  # 鍵の当たり方を測ってjs/accuracy.jsを作る
 ├── wordlists/                # 付属辞書（1行に1語）
+│   ├── 12dicts-3of6game.txt  # 大きい英単語辞書（12dicts 3of6game、公有）
+│   ├── 12dicts-NOTICE.md     # 12dictsの出典・ライセンス・SHA-256
 │   ├── animals.txt           # 動物名
 │   ├── english-mini-223.txt  # 内蔵ミニ辞書と同じ語
 │   ├── english_1842.txt      # 基本英単語

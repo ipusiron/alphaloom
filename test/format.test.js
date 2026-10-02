@@ -6,7 +6,7 @@ import fs from 'node:fs';
 const ROOT = new URL('..', import.meta.url);
 const files = (dir, ext) => fs.readdirSync(new URL(dir, ROOT)).filter((f) => f.endsWith(ext)).map((f) => `${dir}${f}`);
 const lines = (f) => fs.readFileSync(new URL(f, ROOT), 'utf8').split(/\r?\n/);
-const CODE = () => [...files('js/', '.js'), ...files('test/', '.js'), 'script.js', 'style.css'];
+const CODE = () => [...files('js/', '.js'), ...files('test/', '.js'), ...files('tools/', '.mjs'), 'script.js', 'style.css'];
 
 test('JS・CSS・テストの最長行は160文字以下、index.html は250文字以下', () => {
   for (const f of CODE()) {
