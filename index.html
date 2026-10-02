@@ -3,166 +3,210 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none';" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <title>AlphaLoom</title>
+  <meta name="description" content="AlphaLoom: 列ごとの候補文字を組み合わせ、辞書の語と照らして鍵の候補を探すツール">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script src="js/theme-init.js"></script>
+  <script src="js/file-check.js" defer></script>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
+  <noscript>
+    <p class="boot-notice">このツールはJavaScriptを使います。ブラウザーの設定でJavaScriptを有効にしてください。<br>
+    This tool needs JavaScript. Please enable JavaScript in your browser settings.</p>
+  </noscript>
+  <div id="fileNotice" class="boot-notice hidden" role="alert">
+    <div data-lang="ja">
+      <p>このページをファイルとして直接開いたため、ブラウザーがプログラム（ES modules）を読み込めず、ツールが動いていません。</p>
+      <p>フォルダーで<code>python -m http.server 8000</code>などを実行し、<code>http://localhost:8000/</code>で開いてください。</p>
+      <p>公開版は<a href="https://ipusiron.github.io/alphaloom/" rel="noopener noreferrer">https://ipusiron.github.io/alphaloom/</a>です。</p>
+    </div>
+    <div data-lang="en" hidden>
+      <p>This page was opened directly as a file, so the browser could not load its program (ES modules) and the tool is not running.</p>
+      <p>Run <code>python -m http.server 8000</code> or similar in the folder and open <code>http://localhost:8000/</code>.</p>
+      <p>The public version is at <a href="https://ipusiron.github.io/alphaloom/" rel="noopener noreferrer">https://ipusiron.github.io/alphaloom/</a>.</p>
+    </div>
+  </div>
+
   <header class="site-header">
-    <h1>AlphaLoom</h1>
-    <p class="subtitle">文字列組み合わせ＆辞書照合による鍵候補探索ツール</p>
+    <div class="header-inner">
+      <div class="header-side" aria-hidden="true"></div>
+      <div class="hero">
+        <h1>AlphaLoom</h1>
+        <p class="subtitle">列ごとの候補文字を組み合わせ、辞書の語と照らして鍵の候補を探す</p>
+      </div>
+      <div class="header-side header-actions">
+        <button type="button" id="btnTheme" class="icon-btn" aria-label="ダークモードに切り替える">🌙</button>
+      </div>
+    </div>
   </header>
 
   <main class="container">
-    <!-- Tabs -->
-    <div class="tab-nav">
-      <button class="tab-btn active" data-tab="generator">鍵候補生成</button>
-      <button class="tab-btn" data-tab="dictionary">辞書設定</button>
-      <button class="tab-btn" data-tab="about">使い方</button>
+    <div class="tab-nav" role="tablist" aria-label="機能の切り替え">
+      <button type="button" role="tab" id="tab-generator" class="tab-btn active" data-tab="generator"
+              aria-controls="panel-generator" aria-selected="true">鍵候補生成</button>
+      <button type="button" role="tab" id="tab-dictionary" class="tab-btn" data-tab="dictionary"
+              aria-controls="panel-dictionary" aria-selected="false" tabindex="-1">辞書設定</button>
+      <button type="button" role="tab" id="tab-about" class="tab-btn" data-tab="about"
+              aria-controls="panel-about" aria-selected="false" tabindex="-1">使い方</button>
     </div>
 
-    <!-- Tab: Generator -->
-    <div class="tab-content active" data-tab="generator">
-      <section class="card">
+    <!-- 鍵候補生成 -->
+    <section id="panel-generator" class="tab-content" role="tabpanel" aria-labelledby="tab-generator">
+      <form id="formGen" class="card" novalidate>
         <h2>1) 入力</h2>
-        <div class="key-length-section">
-          <label for="keyLength">
-            文字数（1〜20）
-            <span class="help-icon" title="生成する鍵候補の文字数を指定します">?</span>
-          </label>
-          <select id="keyLength">
-            <option value="" selected>-- 選択 --</option>
-          </select>
-        </div>
-
-        <div class="input-help">
-          <p class="muted">
-            文字候補は A–Z のみ（空欄可）。空欄の列は A–Z 全てを等確率で扱います。<br/>
-            文字を並べた順に重みが強くなります（例: <code>CAB</code> は <code>C &gt; A &gt; B</code>）。
-          </p>
-        </div>
-
-        <div id="columnsContainer" class="columns"></div>
-
-        <div class="params-row">
-          <label>
-            最大展開（上限）:
-            <span class="help-icon" title="処理する候補数の上限。5文字なら500000以上推奨。大きいほど多くの候補を生成しますが時間がかかります">?</span>
-            <input id="maxExpand" type="number" min="1" value="1000000" />
-          </label>
-          <label>
-            ビーム幅:
-            <span class="help-icon" title="各段階で保持する候補数。5文字なら20000以上推奨。小さいと多様性が失われます">?</span>
-            <input id="beamWidth" type="number" min="1" value="50000" />
-          </label>
-        </div>
-
-        <div class="run-actions">
-          <button id="runBtn" class="btn btn-primary">全パターン出力</button>
-          <button id="clearBtn" class="btn btn-ghost">クリア</button>
-        </div>
-      </section>
-
-      <section class="card" id="resultsSection" style="display:none">
-        <h2>2) 結果（列重みベースの信頼度）</h2>
-        <div class="results-header">
-          <div id="summaryLine" class="muted"></div>
-          <div class="filter-controls">
-            <button id="dictFilterBtn" class="btn btn-secondary">辞書で絞り込み</button>
-            <label class="inline">
-              <input type="checkbox" id="partialCheck" />
-              部分一致を表示（内部的には常に集計）
-            </label>
+        <div class="field-grid">
+          <div class="field">
+            <label for="keyLength">文字数（1〜20）</label>
+            <select id="keyLength"></select>
+          </div>
+          <div class="field">
+            <label for="pattern">パターンから列を埋める</label>
+            <div class="inline-input">
+              <input type="text" id="pattern" autocomplete="off" spellcheck="false" maxlength="60" placeholder="例: ?HE??"
+                     aria-describedby="patternHint">
+              <button type="button" id="applyPatternBtn" class="btn">列に反映</button>
+            </div>
+            <p class="hint" id="patternHint">英字はその位置の文字、「?」はどの文字でもよい列です（文字数も合わせて変わります）</p>
           </div>
         </div>
-        <div class="result-groups">
-          <details open>
-            <summary>高信頼</summary>
-            <div id="groupHigh" class="result-list"></div>
-          </details>
-          <details>
-            <summary>中信頼</summary>
-            <div id="groupMid" class="result-list"></div>
-          </details>
-          <details>
-            <summary>小信頼</summary>
-            <div id="groupLow" class="result-list"></div>
-          </details>
+        <p class="hint">各列に、その位置に来そうな文字を優先順に入れます（例: CAB は C＞A＞B の順に重い。重みは 3:2:1）。
+          空欄の列はA〜Zの26文字を同じ重みで扱います。全角英字も使え、同じ文字は1つにまとめます。</p>
+        <div id="columnsContainer" class="columns"></div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="keep">保持する件数（1〜50,000）</label>
+            <input type="number" id="keep" min="1" max="50000" value="10000" inputmode="numeric" aria-describedby="keepHint">
+            <p class="hint" id="keepHint">重みの大きい順に、この件数を正確に求めます（打ち切りや近似はしません）</p>
+          </div>
+        </div>
+        <div class="run-actions">
+          <div class="search-row">
+            <button type="submit" id="runBtn" class="btn btn-primary">組み合わせを作る</button>
+            <button type="button" id="clearBtn" class="btn btn-ghost">クリア</button>
+          </div>
+          <p id="status" class="status" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <section class="card" id="resultsSection" aria-labelledby="resultsHeading" hidden>
+        <h2 id="resultsHeading">2) 組み合わせ（重みの大きい順）</h2>
+        <p id="summaryLine" class="summary"></p>
+        <p id="staleNote" class="stale-note" hidden></p>
+        <p id="equalNote" class="stale-note" hidden></p>
+        <div class="result-actions">
+          <label class="check">
+            <input type="checkbox" id="partialCheck">
+            3文字以上の辞書の語を含む候補だけを表示
+          </label>
+          <span id="resultInfo" class="muted"></span>
+        </div>
+        <div class="table-wrap">
+          <table id="resultTable">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">鍵の候補</th>
+                <th scope="col">重み</th>
+                <th scope="col">辞書の語</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="result-actions">
+          <button type="button" id="moreBtn" class="btn" hidden>さらに表示</button>
+        </div>
+        <div class="result-actions">
+          <button type="button" id="exportTxtBtn" class="btn btn-ghost">テキストで保存</button>
+          <button type="button" id="exportCsvBtn" class="btn btn-ghost">CSVで保存</button>
+          <button type="button" id="exportJsonBtn" class="btn btn-ghost">JSONで保存</button>
+          <span id="exportInfo" class="muted" role="status" aria-live="polite"></span>
         </div>
       </section>
 
-      <section class="card" id="exportSection" style="display:none">
-        <h2>エクスポート</h2>
-        <button id="exportTxtBtn" class="btn btn-ghost">結果をテキストエクスポート</button>
-        <span id="exportInfo" class="muted"></span>
+      <section class="card" id="dictSection" aria-labelledby="dictHeading" hidden>
+        <h2 id="dictHeading">3) 辞書の語との照合</h2>
+        <p class="hint">使っている辞書の語のうち、同じ文字数で、どの位置の文字も列の候補に入っている語を、重みの大きい順に並べます。
+          保持した件数に入らない語も漏らしません。</p>
+        <p id="dictSummary" class="summary"></p>
+        <div class="table-wrap">
+          <table id="dictTable">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">辞書の語</th>
+                <th scope="col">重み</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="result-actions">
+          <button type="button" id="exportDictCsvBtn" class="btn btn-ghost">CSVで保存</button>
+          <button type="button" id="exportDictJsonBtn" class="btn btn-ghost">JSONで保存</button>
+        </div>
       </section>
-    </div>
+    </section>
 
-    <!-- Tab: Dictionary -->
-    <div class="tab-content" data-tab="dictionary">
+    <!-- 辞書設定 -->
+    <section id="panel-dictionary" class="tab-content" role="tabpanel" aria-labelledby="tab-dictionary" hidden>
       <section class="card">
         <h2>辞書設定</h2>
-
-        <div class="row">
-          <div class="col">
-            <input type="file" id="wordlistFile" accept=".txt" />
-            <button id="loadWordlistBtn" class="btn">辞書を読み込み</button>
-          </div>
-          <div class="col">
-            <label>相対パス（Pages）:
-              <input type="text" id="wordlistPath" placeholder="wordlists/english-mini-200.txt" />
-            </label>
-            <button id="fetchWordlistBtn" class="btn btn-secondary">fetchで取得</button>
-          </div>
-        </div>
-
-        <p class="muted" id="dictStatus">辞書：内蔵ミニ辞書（約200語）</p>
-
+        <p>照合に使う辞書を選びます。複数を同時に使え、同じ語は1つにまとめます。辞書の語は英字だけに直して使います。</p>
+        <p id="dictProtocolNote" class="stale-note" hidden></p>
+        <h3 id="dictListHeading">辞書の一覧</h3>
+        <ul id="dictListContainer" class="dict-list" aria-labelledby="dictListHeading"></ul>
+        <p id="dictStatus" class="status" role="status" aria-live="polite"></p>
         <div class="dictionary-info">
-          <h3>辞書情報</h3>
-          <p>合計単語数: <span id="wordCount">0</span> 語</p>
-          <h3>読み込み済み辞書</h3>
-          <div id="dictListContainer" class="dict-list-container"></div>
+          <h3>いま使っている辞書</h3>
+          <p>合計の語数: <strong id="wordCount">0</strong></p>
         </div>
-
-        <div class="dictionary-help">
-          <h3>辞書ファイル仕様</h3>
-          <ul>
-            <li><strong>必須</strong>: 1行1ワード、すべて大文字（A-Z）</li>
-            <li><strong>推奨</strong>: ソート済み・重複除去済み（処理効率向上のため）</li>
-            <li>文字エンコーディング: UTF-8</li>
-          </ul>
-          <h3>使い方</h3>
-          <ul>
-            <li>ローカルファイル: 上記仕様のテキストファイルを選択して「辞書を読み込み」をクリック</li>
-            <li>GitHub Pages: 相対パスを入力して「fetchで取得」をクリック</li>
-            <li>正規化: 自動的に A–Z のみに変換し、大文字化・重複は除去</li>
-          </ul>
+        <h3>自分の辞書を追加</h3>
+        <div class="add-dict">
+          <div class="field">
+            <label for="wordlistFile">テキストファイル（1行に1語、UTF-8、10MBまで）</label>
+            <input type="file" id="wordlistFile" accept=".txt,text/plain">
+          </div>
+          <button type="button" id="loadWordlistBtn" class="btn">ファイルを読み込む</button>
         </div>
+        <div class="add-dict">
+          <div class="field field-wide">
+            <label for="pasteWords">貼り付け（1行に1語）</label>
+            <textarea id="pasteWords" rows="4" spellcheck="false" placeholder="LEMON&#10;ORANGE&#10;CHERRY"></textarea>
+          </div>
+          <button type="button" id="addPastedBtn" class="btn">貼り付けた語を追加</button>
+        </div>
+        <p class="hint">読み込んだ辞書はこのページの中だけで使い、どこにも送りません。ページを閉じると消えます。</p>
       </section>
-    </div>
+    </section>
 
-    <!-- Tab: About -->
-    <div class="tab-content" data-tab="about">
+    <!-- 使い方 -->
+    <section id="panel-about" class="tab-content" role="tabpanel" aria-labelledby="tab-about" hidden>
       <section class="card">
-        <h2>使い方（概要）</h2>
+        <h2>使い方</h2>
         <ol>
-          <li>鍵文字数（1〜20）を選ぶと「列1〜L」の入力欄が生成されます。</li>
-          <li>各列に候補文字（A–Z, 空欄可）を入力します。並び順が重みになります。</li>
-          <li>「全パターン出力」で候補鍵を生成・スコア化し、高/中/小に自動分類します。</li>
-          <li>「辞書による絞り込み」で、鍵そのものの完全一致/部分一致を使って再ランクします。</li>
-          <li>必要に応じて辞書タブで辞書を追加・有効化してください。</li>
+          <li>文字数（1〜20）を選ぶと、列1〜列Nの欄が並びます。パターン（例: <code>?HE??</code>）から埋めることもできます。</li>
+          <li>各列に、その位置に来そうな文字を優先順に入れます。並べた順に重みが強くなり、空欄の列はA〜Zの26文字を同じ重みで扱います。</li>
+          <li>「組み合わせを作る」で、重みの大きい組み合わせから順に、保持する件数だけ並べます。重みは各列の重みの積で、すべての組み合わせの合計が100%です（正解である確率ではありません）。</li>
+          <li>「辞書の語との照合」に、列の候補に合う辞書の語が重みの順に並びます。鍵が英単語のときは、まずこちらを見ます。</li>
+          <li>「辞書設定」で、照合に使う辞書を選んだり、自分の語の一覧を足したりできます。</li>
         </ol>
+        <h3>ヴィジュネル暗号の鍵を探すとき</h3>
+        <p>鍵の長さが分かったら、暗号文を鍵の長さで列に分け、列ごとに「英文らしく戻るずらし（鍵の文字）」の上位を各列に入れます。
+          鍵が英単語なら、「辞書の語との照合」の上位に鍵が出ることが多くなります。</p>
       </section>
-    </div>
+    </section>
   </main>
 
-  <footer>
-    <div class="footer">
-      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/alphaloom" target="_blank">ipusiron/alphaloom</a> ）
-    </div>
+  <footer class="footer">
+    <p>Day046 - 生成AIで作るセキュリティツール100</p>
+    <p>🔗 GitHubリポジトリ: <a href="https://github.com/ipusiron/alphaloom" target="_blank" rel="noopener noreferrer">ipusiron/alphaloom</a></p>
   </footer>
 
-  <script src="./script.js"></script>
+  <script type="module" src="./script.js"></script>
 </body>
 </html>

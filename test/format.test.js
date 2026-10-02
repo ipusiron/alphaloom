@@ -6,18 +6,18 @@ import fs from 'node:fs';
 const ROOT = new URL('..', import.meta.url);
 const files = (dir, ext) => fs.readdirSync(new URL(dir, ROOT)).filter((f) => f.endsWith(ext)).map((f) => `${dir}${f}`);
 const lines = (f) => fs.readFileSync(new URL(f, ROOT), 'utf8').split(/\r?\n/);
-// script.js・style.css・index.html は画面を作り直す段階で対象に足す
-const CODE = () => [...files('js/', '.js'), ...files('test/', '.js')];
+const CODE = () => [...files('js/', '.js'), ...files('test/', '.js'), 'script.js', 'style.css'];
 
-test('JS・テストの最長行は160文字以下', () => {
+test('JS・CSS・テストの最長行は160文字以下、index.html は250文字以下', () => {
   for (const f of CODE()) {
     const long = lines(f).findIndex((l) => l.length > 160);
     assert.equal(long, -1, `${f}:${long + 1}`);
   }
+  assert.equal(lines('index.html').findIndex((l) => l.length > 250), -1);
 });
 
-test('JS・テストに制御文字（タブ・改行以外）が入っていない', () => {
-  for (const f of CODE()) {
+test('JS・CSS・HTML に制御文字（タブ・改行以外）が入っていない', () => {
+  for (const f of [...CODE(), 'index.html']) {
     const text = fs.readFileSync(new URL(f, ROOT), 'utf8');
     const bad = [...text].findIndex((c) => c.charCodeAt(0) < 32 && ![9, 10, 13].includes(c.charCodeAt(0)));
     assert.equal(bad, -1, f);
@@ -27,6 +27,6 @@ test('JS・テストに制御文字（タブ・改行以外）が入っていな
 });
 
 test('主要ファイルの行数の下限（詰め込み・取り違えの検出）', () => {
-  const min = { 'js/loom-core.js': 150 };
+  const min = { 'index.html': 150, 'style.css': 300, 'script.js': 300, 'js/loom-core.js': 150 };
   for (const [f, n] of Object.entries(min)) assert.ok(lines(f).length >= n, `${f}: ${lines(f).length}`);
 });
