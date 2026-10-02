@@ -8,7 +8,8 @@ import {
 } from './js/loom-core.js';
 import { BUILTIN_WORDS, BUNDLED_WORDLISTS, DEFAULT_WORDLISTS, MAX_FILE_BYTES, MAX_DICTIONARY_WORDS, displayName } from './js/wordlists.js';
 import { t } from './js/messages.js';
-import { initThemeToggle } from './js/theme.js';
+import { initThemeToggle, refreshThemeButton } from './js/theme.js';
+import { initialLanguage, saveLanguage, useLanguage } from './js/i18n.js';
 import { initTabs } from './js/tabs.js';
 import {
   cipherLetters, rankColumns, scoreWordsByCipher, decryptVigenere, keyLengthCandidates, MAX_CIPHER_LETTERS, ENGLISH_EXPECTED, RANDOM_EXPECTED
@@ -653,8 +654,28 @@ function bindEvents() {
   });
 }
 
+// ===== Language =====
+// 言語を切り替える: 静的な文言、テーマのボタン、列の欄、辞書の一覧、表示中の結果を今の言語で描き直す（状態の表示は消す）
+function switchLanguage(lang) {
+  useLanguage(lang);
+  refreshThemeButton($('#btnTheme'));
+  renderColumns(columnInputs().length);
+  renderDictionaryList();
+  for (const sel of ['#status', '#dictStatus', '#exportInfo', '#cipherStatus', '#estimateResult']) setStatus($(sel), '');
+  if (IS_FILE) $('#dictProtocolNote').textContent = t('dictionary.fileProtocol');
+  if (!$('#staleNote').hidden) $('#staleNote').textContent = t('gen.stale');
+  renderCipher();
+  renderResults();
+}
+
 // ===== Init =====
 async function init() {
+  useLanguage(initialLanguage());
+  $('#btnLang').addEventListener('click', () => {
+    const next = document.documentElement.lang === 'ja' ? 'en' : 'ja';
+    switchLanguage(next);
+    saveLanguage(next);
+  });
   initThemeToggle($('#btnTheme'));
   initTabs($('.tab-nav'));
   bindEvents();

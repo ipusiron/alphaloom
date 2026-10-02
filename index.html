@@ -36,97 +36,99 @@
       <div class="header-side" aria-hidden="true"></div>
       <div class="hero">
         <h1>AlphaLoom</h1>
-        <p class="subtitle">列ごとの候補文字を組み合わせ、辞書の語と照らして鍵の候補を探す</p>
+        <p class="subtitle" data-i18n="ui.subtitle">列ごとの候補文字を組み合わせ、辞書の語と照らして鍵の候補を探す</p>
       </div>
       <div class="header-side header-actions">
+        <button type="button" id="btnLang" class="icon-btn lang-btn" data-i18n="ui.langButton"
+                data-i18n-attr="aria-label:ui.switchLang;title:ui.switchLang" aria-label="Switch to English" title="Switch to English">EN</button>
         <button type="button" id="btnTheme" class="icon-btn" aria-label="ダークモードに切り替える">🌙</button>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <div class="tab-nav" role="tablist" aria-label="機能の切り替え">
+    <div class="tab-nav" role="tablist" aria-label="機能の切り替え" data-i18n-attr="aria-label:ui.tabsLabel">
       <button type="button" role="tab" id="tab-generator" class="tab-btn active" data-tab="generator"
-              aria-controls="panel-generator" aria-selected="true">鍵候補生成</button>
+              aria-controls="panel-generator" aria-selected="true" data-i18n="ui.tabGenerator">鍵候補生成</button>
       <button type="button" role="tab" id="tab-dictionary" class="tab-btn" data-tab="dictionary"
-              aria-controls="panel-dictionary" aria-selected="false" tabindex="-1">辞書設定</button>
+              aria-controls="panel-dictionary" aria-selected="false" tabindex="-1" data-i18n="ui.tabDictionary">辞書設定</button>
       <button type="button" role="tab" id="tab-about" class="tab-btn" data-tab="about"
-              aria-controls="panel-about" aria-selected="false" tabindex="-1">使い方</button>
+              aria-controls="panel-about" aria-selected="false" tabindex="-1" data-i18n="ui.tabAbout">使い方</button>
     </div>
 
     <!-- 鍵候補生成 -->
     <section id="panel-generator" class="tab-content" role="tabpanel" aria-labelledby="tab-generator">
       <section class="card" aria-labelledby="cipherHeading">
-        <h2 id="cipherHeading">暗号文から列の候補を作る（ヴィジュネル暗号・使わなくてもよい）</h2>
-        <p class="hint">暗号文と鍵の長さを入れると、列ごとに鍵の文字を英語らしさの順に並べて上位を下の列に入れ、
+        <h2 id="cipherHeading" data-i18n="ui.cipherHeading">暗号文から列の候補を作る（ヴィジュネル暗号・使わなくてもよい）</h2>
+        <p class="hint" data-i18n="ui.cipherIntro">暗号文と鍵の長さを入れると、列ごとに鍵の文字を英語らしさの順に並べて上位を下の列に入れ、
           辞書の語を「その語で戻した文の英語らしさ」の順に並べます。鍵が英単語なら、列ごとの1位がそろわない短い暗号文でも鍵が上位に出ます。</p>
         <form id="formCipher" novalidate>
           <div class="field">
-            <label for="cipherText">暗号文</label>
+            <label for="cipherText" data-i18n="ui.cipherText">暗号文</label>
             <textarea id="cipherText" rows="4" spellcheck="false" maxlength="20000" placeholder="例: URDHLRXEZZEFNAGSCFGIUPVYURIBXBHEVQXEASKH"
-                      aria-describedby="cipherTextHint"></textarea>
-            <p class="hint" id="cipherTextHint">英字だけを使います（空白・記号・数字は無視、10,000字まで）</p>
+                      aria-describedby="cipherTextHint" data-i18n-attr="placeholder:ph.cipher"></textarea>
+            <p class="hint" id="cipherTextHint" data-i18n="ui.cipherTextHint">英字だけを使います（空白・記号・数字は無視、10,000字まで）</p>
           </div>
           <div class="field-grid">
             <div class="field">
-              <label for="cipherKeyLength">鍵の長さ（1〜20）</label>
+              <label for="cipherKeyLength" data-i18n="ui.cipherKeyLength">鍵の長さ（1〜20）</label>
               <div class="inline-input">
-                <input type="number" id="cipherKeyLength" min="1" max="20" inputmode="numeric" placeholder="例: 6">
-                <button type="button" id="estimateBtn" class="btn">推定</button>
+                <input type="number" id="cipherKeyLength" min="1" max="20" inputmode="numeric" placeholder="例: 6" data-i18n-attr="placeholder:ph.keyLength">
+                <button type="button" id="estimateBtn" class="btn" data-i18n="ui.estimate">推定</button>
               </div>
               <p class="hint" id="estimateResult" role="status" aria-live="polite"></p>
             </div>
             <div class="field">
-              <label for="perColumn">列に入れる文字の数（1〜26）</label>
+              <label for="perColumn" data-i18n="ui.perColumn">列に入れる文字の数（1〜26）</label>
               <input type="number" id="perColumn" min="1" max="26" value="3" inputmode="numeric">
             </div>
           </div>
           <div class="search-row">
-            <button type="submit" id="analyzeBtn" class="btn btn-primary">列の候補を作る</button>
-            <button type="button" id="clearCipherBtn" class="btn btn-ghost">暗号文を消す</button>
+            <button type="submit" id="analyzeBtn" class="btn btn-primary" data-i18n="ui.analyze">列の候補を作る</button>
+            <button type="button" id="clearCipherBtn" class="btn btn-ghost" data-i18n="ui.clearCipher">暗号文を消す</button>
           </div>
           <p id="cipherStatus" class="status" role="status" aria-live="polite"></p>
         </form>
       </section>
 
       <form id="formGen" class="card" novalidate>
-        <h2>1) 入力</h2>
+        <h2 data-i18n="ui.input">1) 入力</h2>
         <div class="field-grid">
           <div class="field">
-            <label for="keyLength">文字数（1〜20）</label>
+            <label for="keyLength" data-i18n="ui.keyLength">文字数（1〜20）</label>
             <select id="keyLength"></select>
           </div>
           <div class="field">
-            <label for="pattern">パターンから列を埋める</label>
+            <label for="pattern" data-i18n="ui.pattern">パターンから列を埋める</label>
             <div class="inline-input">
               <input type="text" id="pattern" autocomplete="off" spellcheck="false" maxlength="60" placeholder="例: ?HE??"
-                     aria-describedby="patternHint">
-              <button type="button" id="applyPatternBtn" class="btn">列に反映</button>
+                     aria-describedby="patternHint" data-i18n-attr="placeholder:ph.pattern">
+              <button type="button" id="applyPatternBtn" class="btn" data-i18n="ui.applyPattern">列に反映</button>
             </div>
-            <p class="hint" id="patternHint">英字はその位置の文字、「?」はどの文字でもよい列です（文字数も合わせて変わります）</p>
+            <p class="hint" id="patternHint" data-i18n="ui.patternHint">英字はその位置の文字、「?」はどの文字でもよい列です（文字数も合わせて変わります）</p>
           </div>
         </div>
-        <p class="hint">各列に、その位置に来そうな文字を優先順に入れます（例: CAB は C＞A＞B の順に重い。重みは 3:2:1）。
+        <p class="hint" data-i18n="ui.columnsHint">各列に、その位置に来そうな文字を優先順に入れます（例: CAB は C＞A＞B の順に重い。重みは 3:2:1）。
           空欄の列はA〜Zの26文字を同じ重みで扱います。全角英字も使え、同じ文字は1つにまとめます。</p>
         <div id="columnsContainer" class="columns"></div>
         <div class="field-grid">
           <div class="field">
-            <label for="keep">保持する件数（1〜50,000）</label>
+            <label for="keep" data-i18n="ui.keep">保持する件数（1〜50,000）</label>
             <input type="number" id="keep" min="1" max="50000" value="10000" inputmode="numeric" aria-describedby="keepHint">
-            <p class="hint" id="keepHint">重みの大きい順に、この件数を正確に求めます（打ち切りや近似はしません）</p>
+            <p class="hint" id="keepHint" data-i18n="ui.keepHint">重みの大きい順に、この件数を正確に求めます（打ち切りや近似はしません）</p>
           </div>
         </div>
         <div class="run-actions">
           <div class="search-row">
-            <button type="submit" id="runBtn" class="btn btn-primary">組み合わせを作る</button>
-            <button type="button" id="clearBtn" class="btn btn-ghost">クリア</button>
+            <button type="submit" id="runBtn" class="btn btn-primary" data-i18n="ui.run">組み合わせを作る</button>
+            <button type="button" id="clearBtn" class="btn btn-ghost" data-i18n="ui.clear">クリア</button>
           </div>
           <p id="status" class="status" role="status" aria-live="polite"></p>
         </div>
       </form>
 
       <section class="card" id="cipherSection" aria-labelledby="cipherResultHeading" hidden>
-        <h2 id="cipherResultHeading">暗号文での照合（辞書の語を英語らしさの順に）</h2>
+        <h2 id="cipherResultHeading" data-i18n="ui.cipherResultHeading">暗号文での照合（辞書の語を英語らしさの順に）</h2>
         <p id="cipherSummary" class="summary"></p>
         <p id="cipherAccuracy" class="hint"></p>
         <div class="table-wrap">
@@ -134,48 +136,48 @@
             <thead>
               <tr>
                 <th scope="col">#</th>
-                <th scope="col">鍵（辞書の語）</th>
-                <th scope="col">英語らしさ</th>
-                <th scope="col">戻した文（先頭）</th>
+                <th scope="col" data-i18n="ui.colCipherKey">鍵（辞書の語）</th>
+                <th scope="col" data-i18n="ui.colEnglish">英語らしさ</th>
+                <th scope="col" data-i18n="ui.colTrial">戻した文（先頭）</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <p id="cipherInfo" class="muted"></p>
-        <h3 id="columnRankHeading">列ごとの鍵の文字（英語らしさの順）</h3>
+        <h3 id="columnRankHeading" data-i18n="ui.columnRankHeading">列ごとの鍵の文字（英語らしさの順）</h3>
         <div class="table-wrap">
           <table id="columnRankTable" aria-labelledby="columnRankHeading">
             <thead>
               <tr>
-                <th scope="col">列</th>
-                <th scope="col">1位</th>
-                <th scope="col">2位</th>
-                <th scope="col">3位</th>
-                <th scope="col">4位</th>
-                <th scope="col">5位</th>
+                <th scope="col" data-i18n="ui.colColumn">列</th>
+                <th scope="col" data-i18n="ui.rank1">1位</th>
+                <th scope="col" data-i18n="ui.rank2">2位</th>
+                <th scope="col" data-i18n="ui.rank3">3位</th>
+                <th scope="col" data-i18n="ui.rank4">4位</th>
+                <th scope="col" data-i18n="ui.rank5">5位</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <div class="result-actions">
-          <button type="button" id="exportCipherCsvBtn" class="btn btn-ghost">CSVで保存</button>
-          <button type="button" id="exportCipherJsonBtn" class="btn btn-ghost">JSONで保存</button>
+          <button type="button" id="exportCipherCsvBtn" class="btn btn-ghost" data-i18n="ui.saveCsv">CSVで保存</button>
+          <button type="button" id="exportCipherJsonBtn" class="btn btn-ghost" data-i18n="ui.saveJson">JSONで保存</button>
         </div>
-        <h3>この暗号文をほかのツールで開く</h3>
+        <h3 data-i18n="ui.openOther">この暗号文をほかのツールで開く</h3>
         <ul id="cipherLinks" class="link-list"></ul>
       </section>
 
       <section class="card" id="resultsSection" aria-labelledby="resultsHeading" hidden>
-        <h2 id="resultsHeading">2) 組み合わせ（重みの大きい順）</h2>
+        <h2 id="resultsHeading" data-i18n="ui.resultsHeading">2) 組み合わせ（重みの大きい順）</h2>
         <p id="summaryLine" class="summary"></p>
         <p id="staleNote" class="stale-note" hidden></p>
         <p id="equalNote" class="stale-note" hidden></p>
         <div class="result-actions">
           <label class="check">
             <input type="checkbox" id="partialCheck">
-            3文字以上の辞書の語を含む候補だけを表示
+            <span data-i18n="ui.partial">3文字以上の辞書の語を含む候補だけを表示</span>
           </label>
           <span id="resultInfo" class="muted"></span>
         </div>
@@ -184,29 +186,29 @@
             <thead>
               <tr>
                 <th scope="col">#</th>
-                <th scope="col">鍵の候補</th>
-                <th scope="col">重み</th>
-                <th scope="col">辞書の語</th>
-                <th scope="col" class="trial-col" hidden>戻した文（先頭）</th>
+                <th scope="col" data-i18n="ui.colKey">鍵の候補</th>
+                <th scope="col" data-i18n="ui.colWeight">重み</th>
+                <th scope="col" data-i18n="ui.colDictWord">辞書の語</th>
+                <th scope="col" class="trial-col" hidden data-i18n="ui.colTrial">戻した文（先頭）</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <div class="result-actions">
-          <button type="button" id="moreBtn" class="btn" hidden>さらに表示</button>
+          <button type="button" id="moreBtn" class="btn" hidden data-i18n="ui.more">さらに表示</button>
         </div>
         <div class="result-actions">
-          <button type="button" id="exportTxtBtn" class="btn btn-ghost">テキストで保存</button>
-          <button type="button" id="exportCsvBtn" class="btn btn-ghost">CSVで保存</button>
-          <button type="button" id="exportJsonBtn" class="btn btn-ghost">JSONで保存</button>
+          <button type="button" id="exportTxtBtn" class="btn btn-ghost" data-i18n="ui.saveTxt">テキストで保存</button>
+          <button type="button" id="exportCsvBtn" class="btn btn-ghost" data-i18n="ui.saveCsv">CSVで保存</button>
+          <button type="button" id="exportJsonBtn" class="btn btn-ghost" data-i18n="ui.saveJson">JSONで保存</button>
           <span id="exportInfo" class="muted" role="status" aria-live="polite"></span>
         </div>
       </section>
 
       <section class="card" id="dictSection" aria-labelledby="dictHeading" hidden>
-        <h2 id="dictHeading">3) 辞書の語との照合</h2>
-        <p class="hint">使っている辞書の語のうち、同じ文字数で、どの位置の文字も列の候補に入っている語を、重みの大きい順に並べます。
+        <h2 id="dictHeading" data-i18n="ui.dictHeading">3) 辞書の語との照合</h2>
+        <p class="hint" data-i18n="ui.dictHint">使っている辞書の語のうち、同じ文字数で、どの位置の文字も列の候補に入っている語を、重みの大きい順に並べます。
           保持した件数に入らない語も漏らしません。</p>
         <p id="dictSummary" class="summary"></p>
         <div class="table-wrap">
@@ -214,17 +216,17 @@
             <thead>
               <tr>
                 <th scope="col">#</th>
-                <th scope="col">辞書の語</th>
-                <th scope="col">重み</th>
-                <th scope="col" class="trial-col" hidden>戻した文（先頭）</th>
+                <th scope="col" data-i18n="ui.colDictWord">辞書の語</th>
+                <th scope="col" data-i18n="ui.colWeight">重み</th>
+                <th scope="col" class="trial-col" hidden data-i18n="ui.colTrial">戻した文（先頭）</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <div class="result-actions">
-          <button type="button" id="exportDictCsvBtn" class="btn btn-ghost">CSVで保存</button>
-          <button type="button" id="exportDictJsonBtn" class="btn btn-ghost">JSONで保存</button>
+          <button type="button" id="exportDictCsvBtn" class="btn btn-ghost" data-i18n="ui.saveCsv">CSVで保存</button>
+          <button type="button" id="exportDictJsonBtn" class="btn btn-ghost" data-i18n="ui.saveJson">JSONで保存</button>
         </div>
       </section>
     </section>
@@ -232,56 +234,56 @@
     <!-- 辞書設定 -->
     <section id="panel-dictionary" class="tab-content" role="tabpanel" aria-labelledby="tab-dictionary" hidden>
       <section class="card">
-        <h2>辞書設定</h2>
-        <p>照合に使う辞書を選びます。複数を同時に使え、同じ語は1つにまとめます。辞書の語は英字だけに直して使います。</p>
+        <h2 data-i18n="ui.tabDictionary">辞書設定</h2>
+        <p data-i18n="ui.dictIntro">照合に使う辞書を選びます。複数を同時に使え、同じ語は1つにまとめます。辞書の語は英字だけに直して使います。</p>
         <p id="dictProtocolNote" class="stale-note" hidden></p>
-        <h3 id="dictListHeading">辞書の一覧</h3>
+        <h3 id="dictListHeading" data-i18n="ui.dictList">辞書の一覧</h3>
         <ul id="dictListContainer" class="dict-list" aria-labelledby="dictListHeading"></ul>
         <p id="dictStatus" class="status" role="status" aria-live="polite"></p>
         <div class="dictionary-info">
-          <h3>いま使っている辞書</h3>
-          <p>合計の語数: <strong id="wordCount">0</strong></p>
+          <h3 data-i18n="ui.dictCurrent">いま使っている辞書</h3>
+          <p><span data-i18n="ui.totalWords">合計の語数:</span> <strong id="wordCount">0</strong></p>
         </div>
-        <h3>自分の辞書を追加</h3>
+        <h3 data-i18n="ui.addDict">自分の辞書を追加</h3>
         <div class="add-dict">
           <div class="field">
-            <label for="wordlistFile">テキストファイル（1行に1語、UTF-8、10MBまで）</label>
+            <label for="wordlistFile" data-i18n="ui.fileLabel">テキストファイル（1行に1語、UTF-8、10MBまで）</label>
             <input type="file" id="wordlistFile" accept=".txt,text/plain">
           </div>
-          <button type="button" id="loadWordlistBtn" class="btn">ファイルを読み込む</button>
+          <button type="button" id="loadWordlistBtn" class="btn" data-i18n="ui.loadFile">ファイルを読み込む</button>
         </div>
         <div class="add-dict">
           <div class="field field-wide">
-            <label for="pasteWords">貼り付け（1行に1語）</label>
+            <label for="pasteWords" data-i18n="ui.pasteLabel">貼り付け（1行に1語）</label>
             <textarea id="pasteWords" rows="4" spellcheck="false" placeholder="LEMON&#10;ORANGE&#10;CHERRY"></textarea>
           </div>
-          <button type="button" id="addPastedBtn" class="btn">貼り付けた語を追加</button>
+          <button type="button" id="addPastedBtn" class="btn" data-i18n="ui.addPasted">貼り付けた語を追加</button>
         </div>
-        <p class="hint">読み込んだ辞書はこのページの中だけで使い、どこにも送りません。ページを閉じると消えます。</p>
+        <p class="hint" data-i18n="ui.privacy">読み込んだ辞書はこのページの中だけで使い、どこにも送りません。ページを閉じると消えます。</p>
       </section>
     </section>
 
     <!-- 使い方 -->
     <section id="panel-about" class="tab-content" role="tabpanel" aria-labelledby="tab-about" hidden>
       <section class="card">
-        <h2>使い方</h2>
+        <h2 data-i18n="ui.tabAbout">使い方</h2>
         <ol>
-          <li>文字数（1〜20）を選ぶと、列1〜列Nの欄が並びます。パターン（例: <code>?HE??</code>）から埋めることもできます。</li>
-          <li>各列に、その位置に来そうな文字を優先順に入れます。並べた順に重みが強くなり、空欄の列はA〜Zの26文字を同じ重みで扱います。</li>
-          <li>「組み合わせを作る」で、重みの大きい組み合わせから順に、保持する件数だけ並べます。重みは各列の重みの積で、すべての組み合わせの合計が100%です（正解である確率ではありません）。</li>
-          <li>「辞書の語との照合」に、列の候補に合う辞書の語が重みの順に並びます。鍵が英単語のときは、まずこちらを見ます。</li>
-          <li>「辞書設定」で、照合に使う辞書を選んだり、自分の語の一覧を足したりできます。</li>
+          <li data-i18n="ui.about1">文字数（1〜20）を選ぶと、列1〜列Nの欄が並びます。パターン（例: ?HE??）から埋めることもできます。</li>
+          <li data-i18n="ui.about2">各列に、その位置に来そうな文字を優先順に入れます。並べた順に重みが強くなり、空欄の列はA〜Zの26文字を同じ重みで扱います。</li>
+          <li data-i18n="ui.about3">「組み合わせを作る」で、重みの大きい組み合わせから順に、保持する件数だけ並べます。重みは各列の重みの積で、すべての組み合わせの合計が100%です（正解である確率ではありません）。</li>
+          <li data-i18n="ui.about4">「辞書の語との照合」に、列の候補に合う辞書の語が重みの順に並びます。鍵が英単語のときは、まずこちらを見ます。</li>
+          <li data-i18n="ui.about5">「辞書設定」で、照合に使う辞書を選んだり、自分の語の一覧を足したりできます。</li>
         </ol>
-        <h3>ヴィジュネル暗号の鍵を探すとき</h3>
-        <p>鍵の長さが分かったら、暗号文を鍵の長さで列に分け、列ごとに「英文らしく戻るずらし（鍵の文字）」の上位を各列に入れます。
+        <h3 data-i18n="ui.aboutVigenere">ヴィジュネル暗号の鍵を探すとき</h3>
+        <p data-i18n="ui.aboutVigenereText">鍵の長さが分かったら、暗号文を鍵の長さで列に分け、列ごとに「英文らしく戻るずらし（鍵の文字）」の上位を各列に入れます。
           鍵が英単語なら、「辞書の語との照合」の上位に鍵が出ることが多くなります。</p>
       </section>
     </section>
   </main>
 
   <footer class="footer">
-    <p>Day046 - 生成AIで作るセキュリティツール100</p>
-    <p>🔗 GitHubリポジトリ: <a href="https://github.com/ipusiron/alphaloom" target="_blank" rel="noopener noreferrer">ipusiron/alphaloom</a></p>
+    <p data-i18n="ui.footerDay">Day046 - 生成AIで作るセキュリティツール100</p>
+    <p><span data-i18n="ui.footerRepo">🔗 GitHubリポジトリ:</span> <a href="https://github.com/ipusiron/alphaloom" target="_blank" rel="noopener noreferrer">ipusiron/alphaloom</a></p>
   </footer>
 
   <script type="module" src="./script.js"></script>
