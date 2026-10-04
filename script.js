@@ -15,7 +15,7 @@ import {
   cipherLetters, rankColumns, scoreWordsByCipher, decryptVigenere, keyLengthCandidates, MAX_CIPHER_LETTERS, ENGLISH_EXPECTED, RANDOM_EXPECTED
 } from './js/vigenere.js';
 import { ACCURACY } from './js/accuracy.js';
-import { readParams } from './js/params.js';
+import { readParams, urlWithoutHandoff } from './js/params.js';
 
 // ===== Utilities =====
 const $ = (sel) => document.querySelector(sel);
@@ -482,8 +482,9 @@ function renderCipher() {
   $('#columnRankTable tbody').replaceChildren(ranks);
   const q = encodeURIComponent(c.letters);
   $('#cipherLinks').replaceChildren(
-    cipherLink(t('cipher.linkVigenere'), `${TOOL_BASE}vigenere-cipher-tool/?text=${q}`),
-    cipherLink(t('cipher.linkDivider'), `${TOOL_BASE}modular-text-divider/?text=${q}&n=${c.L}`)
+    // 「#」より後ろで渡す（サーバーへ送られず、URLの長さの上限もない。Day017・Day030 は #text= を先に読む）
+    cipherLink(t('cipher.linkVigenere'), `${TOOL_BASE}vigenere-cipher-tool/#text=${q}`),
+    cipherLink(t('cipher.linkDivider'), `${TOOL_BASE}modular-text-divider/#text=${q}&n=${c.L}`)
   );
 }
 
@@ -696,9 +697,18 @@ async function init() {
   applyParams();
 }
 
-// ?text=…&n=… で渡された暗号文と鍵の長さを入れる。鍵の長さがあれば列の候補まで作り、なければ鍵の長さを推定する
+// #text=…&n=…（または ?text=…&n=…）で渡された暗号文と鍵の長さを入れる。鍵の長さがあれば列の候補まで作り、なければ鍵の長さを推定する
 function applyParams() {
-  const { text, n } = readParams(window.location.search);
+  const { text, n } = readParams(window.location.search, window.location.hash);
+  // 読み込んだら URL から text と n を消す（replaceState なので「戻る」の回数は増えない）
+  const cleaned = urlWithoutHandoff(window.location.href);
+  if (cleaned !== null) {
+    try {
+      history.replaceState(history.state, '', cleaned);
+    } catch {
+      // 消せない環境でも、読み込みはそのまま続ける
+    }
+  }
   if (!text) return;
   $('#cipherText').value = text;
   if (n) {

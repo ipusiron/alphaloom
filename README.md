@@ -130,10 +130,13 @@ AlphaLoomは、鍵の位置（列）ごとに「来そうな文字」を優先�
 
 ## 🔗 URLで暗号文を渡す
 
-URLに`?text=`（暗号文）と`&n=`（鍵の長さ）を付けると、その暗号文で列の候補を作った状態で開きます。`&n=`を省くと、鍵の長さを推定して欄に入れるところまで進みます。Modular Text Divider（Day030）と同じ形なので、ほかのツールや記事から暗号文を渡して開けます。
+URLに`#text=`（暗号文）と`&n=`（鍵の長さ）を付けると、その暗号文で列の候補を作った状態で開きます。従来の`?text=`も使えます。`&n=`を省くと、鍵の長さを推定して欄に入れるところまで進みます。Modular Text Divider（Day030）と同じ形なので、ほかのツールや記事から暗号文を渡して開けます。
 
-- `https://ipusiron.github.io/alphaloom/?text=URDHLRXEZZEFNAGSCFGIUPVYURIBXBHEVQXEASKH&n=6`
-- `?text=`は10,000字まで、`&n=`は1〜20
+- `https://ipusiron.github.io/alphaloom/#text=URDHLRXEZZEFNAGSCFGIUPVYURIBXBHEVQXEASKH&n=6`
+- `#`より後ろはサーバーへ送られないので、暗号文がGitHub Pagesに届かず、URLの長さの上限（GitHub Pagesはパスと`?`以降で8,192バイトまで）も受けない。`?text=`で約8,150字を超えるとエラーのページになる
+- 暗号文は10,000字まで、`&n=`は1〜20。`#`と`?`の両方にあれば`#`を優先する
+- 読み込んだあと、URLの`#`と`?`の両方から`text`と`n`を消す（アドレスバー・ブックマーク・URLのコピーに残さない）。開いたときのURLは、ブラウザーの閲覧履歴に残ることがある
+- 照合の結果からVigenère Cipher Tool（Day017）・Modular Text Divider（Day030）へ渡すリンクも`#text=`で渡す
 - 言語は`?lang=ja`・`?lang=en`で指定できる
 
 ---
@@ -305,7 +308,7 @@ alphaloom/
 │   ├── i18n.js               # 画面の言語（日本語・英語）の決定と切り替え
 │   ├── loom-core.js          # 探索のロジック（列の重み・上位の組み合わせ・辞書の採点・部分一致・CSV）
 │   ├── messages.js           # 画面に出す文言（日本語・英語）
-│   ├── params.js             # URLの?text=・?n=で暗号文と鍵の長さを受け取る
+│   ├── params.js             # URLの#text=・#n=（または?）で暗号文と鍵の長さを受け取る
 │   ├── tabs.js               # タブの切り替え（キーボード操作を含む）
 │   ├── theme-init.js         # 読み込みの最初にテーマを当てる
 │   ├── theme.js              # ライト／ダークの切り替え
@@ -318,7 +321,7 @@ alphaloom/
 │   ├── html.test.js          # CSP・要素のid・タブの役割・ラベル
 │   ├── i18n.test.js          # 日英の辞書のキー・英語に日本語がないこと・初期の言語
 │   ├── messages.test.js      # 文言の置き場所とキー
-│   ├── params.test.js        # ?text=・?n=の読み取り
+│   ├── params.test.js        # #text=・?text=の読み取りとURLから消す処理
 │   ├── readme.test.js        # 日英のREADMEの表・構成・ツリー・画像
 │   ├── vigenere.test.js      # 暗号文の分析・既知解答・正答率の表
 │   └── wordlists.test.js     # 付属辞書の語数と内蔵ミニ辞書
