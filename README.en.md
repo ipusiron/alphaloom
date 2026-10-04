@@ -92,10 +92,13 @@ On the "Dictionaries" tab you can choose the dictionaries to use and add your ow
 
 ## 🔗 Passing a ciphertext in the URL
 
-Add `?text=` (the ciphertext) and `&n=` (the key length) to the URL to open the tool with the columns already built from that ciphertext. Without `&n=`, the key length is estimated and entered in the field. The format is the same as Modular Text Divider (Day030), so other tools and articles can open the tool with a ciphertext.
+Add `#text=` (the ciphertext) and `&n=` (the key length) to the URL to open the tool with the columns already built from that ciphertext. The older `?text=` also works. Without `&n=`, the key length is estimated and entered in the field. The format is the same as Modular Text Divider (Day030), so other tools and articles can open the tool with a ciphertext.
 
-- `https://ipusiron.github.io/alphaloom/?text=URDHLRXEZZEFNAGSCFGIUPVYURIBXBHEVQXEASKH&n=6`
-- `?text=` takes up to 10,000 letters and `&n=` takes 1 to 20
+- `https://ipusiron.github.io/alphaloom/#text=URDHLRXEZZEFNAGSCFGIUPVYURIBXBHEVQXEASKH&n=6`
+- The part after `#` is not sent to the server, so the ciphertext does not reach GitHub Pages and is not subject to the URL length limit (GitHub Pages accepts up to 8,192 bytes for the path and the part after `?`). With `?text=`, more than about 8,150 letters ends on an error page
+- The ciphertext takes up to 10,000 letters and `&n=` takes 1 to 20. If both `#` and `?` have them, `#` wins
+- After reading, `text` and `n` are removed from both `#` and `?` in the URL (so they do not stay in the address bar, bookmarks or copied URLs). The URL as opened may remain in the browser history
+- The links from the matching results to Vigenère Cipher Tool (Day017) and Modular Text Divider (Day030) also pass the ciphertext with `#text=`
 - The language can be chosen with `?lang=ja` or `?lang=en`
 
 ---
@@ -267,7 +270,7 @@ alphaloom/
 │   ├── i18n.js               # Choosing and switching the language (Japanese, English)
 │   ├── loom-core.js          # Search logic (weights, top combinations, dictionary scoring, partial matches, CSV)
 │   ├── messages.js           # Strings shown on the screen (Japanese, English)
-│   ├── params.js             # Reads the ciphertext and key length from ?text= and ?n=
+│   ├── params.js             # Reads the ciphertext and key length from #text= and #n= (or ?)
 │   ├── tabs.js               # Tab switching (including the keyboard)
 │   ├── theme-init.js         # Applies the theme at the start of loading
 │   ├── theme.js              # Light/dark switching
@@ -280,7 +283,7 @@ alphaloom/
 │   ├── html.test.js          # CSP, element ids, tab roles, labels
 │   ├── i18n.test.js          # Keys of both languages, no Japanese in English, initial language
 │   ├── messages.test.js      # Where strings live and their keys
-│   ├── params.test.js        # Reading ?text= and ?n=
+│   ├── params.test.js        # Reading #text= and ?text=, and removing them from the URL
 │   ├── readme.test.js        # Tables, structure, tree and images of both READMEs
 │   ├── vigenere.test.js      # Ciphertext analysis, known answers, the hit-rate table
 │   └── wordlists.test.js     # Bundled dictionary counts and the built-in mini dictionary

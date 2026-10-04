@@ -74,7 +74,7 @@ const DOCS = {
       `字数ごとに${fmt(trials)}回（鍵の長さ${KEY_LENGTHS[0]}〜${KEY_LENGTHS.at(-1)}を${TRIALS}回ずつ）`,
       `付属辞書を最初から使う状態（${fmt(ACCURACY.base.words)}語）、「大きい辞書を足して」は12dictsを足した状態（${fmt(ACCURACY.large.words)}語）`,
       `6文字の語は${fmt(ranking.length)}語から${fmt(n6Large)}語に増える`,
-      `\`?text=\`は${fmt(MAX_PARAM_TEXT)}字まで`,
+      `暗号文は${fmt(MAX_PARAM_TEXT)}字まで`,
       `暗号文は${fmt(MAX_CIPHER_LETTERS)}字まで`
     ]
   },
@@ -108,7 +108,7 @@ const DOCS = {
       `the dictionaries used from the start (${fmt(ACCURACY.base.words)} words)`,
       `with 12dicts added (${fmt(ACCURACY.large.words)} words)`,
       `the six-letter words grow from ${fmt(ranking.length)} to ${fmt(n6Large)}`,
-      `\`?text=\` takes up to ${fmt(MAX_PARAM_TEXT)} letters`,
+      `The ciphertext takes up to ${fmt(MAX_PARAM_TEXT)} letters`,
       `ciphertexts up to ${fmt(MAX_CIPHER_LETTERS)} letters`
     ]
   }
@@ -245,7 +245,7 @@ for (const [lang, d] of Object.entries(DOCS)) {
       assert.equal(b.length, g.length);
       assert.deepEqual(r, [String(b.length), pct(b.perColumn, b), pct(b.rank1, b), pct(b.top5, b), pct(g.rank1, g), pct(g.top5, g)]);
     });
-    assert.ok(d.text.includes(`https://ipusiron.github.io/alphaloom/?text=${CIPHER}&n=${L}`));
+    assert.ok(d.text.includes(`https://ipusiron.github.io/alphaloom/#text=${CIPHER}&n=${L}`));
   });
 
   test(`${d.file}: ディレクトリー構造にすべてのファイルとディレクトリーが載り、全行に説明がある`, () => {
