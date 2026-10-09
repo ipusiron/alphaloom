@@ -192,6 +192,14 @@ tr '[:lower:]' '[:upper:]' < input.txt | grep '^[A-Z]\+$' | sort -u > words.txt
 
 ## 🎯 Use cases
 
+Ways of using this tool in particular
+
+- Rereading a faded word (old notes, a sign in a photo): for a five-letter word whose first letter is C or O, second L, third O or A, fourth unreadable and fifth D or K, enter CO, L, OA, an empty column and DK. There are 208 combinations, but the default dictionary (3,241 words) narrows them to two words, CLOUD (1.14%) and CLOCK (0.57%). Put the letters in the order you think most likely and that order becomes the weight (words not in the dictionary and proper nouns do not appear; for specialist words, paste a glossary of the field as the dictionary)
+- Correcting a mistyped neighboring key with the dictionary (a class on how autocorrect works): for a word typed as HELLP, put the typed letter and its neighbors on the keyboard at each position (HGJ, EWR, LKO, LKO, POL). Among 243 combinations the only dictionary word is HELLO (2.08%). You can check by hand the idea of autocorrect, which combines candidates near the typed letters with a dictionary (real autocorrect also uses how common words are and the words around them)
+- Counting the candidates for a spelling heard on the phone (why phonetic alphabets exist): you heard B, E, D on the phone, but B is hard to tell from D, P and V, and D from T, B and P. Enter BDPV, E and DTBP. Of 16 combinations, three dictionary words remain, BED (16%), BET (12%) and PET (6%), so hearing it once does not settle it. It shows in numbers why phonetic alphabets that say Bravo for B and Delta for D are used
+
+General uses
+
 - Learning the Vigenère cipher: enter a ciphertext and compare the per-column frequency analysis with the text decrypted with dictionary words. You can see that even with a short ciphertext whose column first places do not match, a key that is an English word comes near the top of the dictionary words. Check how the cipher works in [Vigenère Cipher Tool (Day017)](https://ipusiron.github.io/vigenere-cipher-tool/) and how the text is split into columns in [Modular Text Divider (Day030)](https://ipusiron.github.io/modular-text-divider/)
 - Classical crypto problems in CTFs: once the key length is known, narrow down the English words that could be the key. If part of the key is known (e.g. the 2nd and 3rd letters are HE), fill the columns from a pattern and list the English words that fit
 - Crosswords and puzzles: find words with known letters at known positions (15 words for ?HE??). Where a position is narrowed to several letters, put those letters in the column
