@@ -328,3 +328,28 @@ test('ALGORITHM.md の暗号文の分析の例（列1・列4の僅差、一致�
   assert.match(script, /^const EXPORT_PREVIEW = 100;$/m);
   assert.ok(doc.includes('上位50語を表示し') && doc.includes('先頭100字まで書き出します'));
 });
+
+test('ユースケースの「このツールならではの使い方」の例は列の採点と一致する（日英）', () => {
+  const [ja, en] = [read('README.md'), read('README.en.md')];
+  const run = (texts) => {
+    const cols = buildColumns(texts);
+    const hits = scoreDictionary(cols, defaultWords).map((x) => `${x.word}（${formatShare(x.logw)}）`);
+    return [String(countCombinations(cols)), hits];
+  };
+  assert.equal(defaultWords.length, 3241);
+  assert.ok(ja.includes(`既定の辞書（${fmt(defaultWords.length)}語）`) && en.includes(`(${fmt(defaultWords.length)} words)`));
+  const cases = [
+    [['CO', 'L', 'OA', '', 'DK'], '208', ['CLOUD（1.14%）', 'CLOCK（0.57%）']],
+    [['HGJ', 'EWR', 'LKO', 'LKO', 'POL'], '243', ['HELLO（2.08%）']],
+    [['BDPV', 'E', 'DTBP'], '16', ['BED（16%）', 'BET（12%）', 'PET（6%）']]
+  ];
+  for (const [texts, total, hits] of cases) {
+    assert.deepEqual(run(texts), [total, hits]);
+    for (const hit of hits) {
+      assert.ok(ja.includes(hit), hit);
+      assert.ok(en.includes(hit.replace('（', ' (').replace('）', ')')), hit);
+    }
+  }
+  assert.ok(ja.includes('組み合わせは208通り') && ja.includes('243通りの中で') && ja.includes('16通りの中に'));
+  assert.ok(en.includes('There are 208 combinations') && en.includes('Among 243') && en.includes('Of 16 combinations'));
+});
