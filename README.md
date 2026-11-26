@@ -18,7 +18,7 @@ category_en:
   - Classic Cryptography
   - Cryptanalysis
 
-difficulty: 1
+difficulty: 3
 
 tags:
   - vigenere
